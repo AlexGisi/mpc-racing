@@ -34,7 +34,7 @@ class Agent():
         # Currently the timeout is set to 10s
 
         # 
-        print("Reach Customized Agent")
         control = carla.VehicleControl()
         control.throttle = 0.5
         return control
+
