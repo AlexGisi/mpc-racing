@@ -42,7 +42,7 @@ class ParameterizedCenterline:
             raise ValueError
         return self.spline_y.derivative().derivative()(s)
     
-    def get_projection(self, X, Y, s0, alpha=0.01, epsilon=0.0001):
+    def get_projection_local(self, X, Y, s0, alpha=0.01, epsilon=0.0001):
         """
         Orthogonal projection of the current position (X, Y) onto the centerline,
         which is the result of the optimization problem s* = \min_{s \in [0, L]}
@@ -109,8 +109,9 @@ class ParameterizedCenterline:
             ax3.plot(plotddx, plotddy, 'g-')
         
         if points is not None:
-            for p in points:
-                ax1.plot(p[0], p[1], 'ro', markersize=10)
+            colors = ['r', 'b']
+            for i, p in enumerate(points):
+                ax1.plot(p[0], p[1], f'{colors[i % len(colors)]}o', markersize=10)
 
         plt.tight_layout()
         plt.show()
@@ -127,7 +128,8 @@ if __name__ == '__main__':
     cl.from_file("../waypoints/shanghai_intl_circuit")
 
     # Test centerline projection.
-    X, Y = (110, 100)
-    s, err = cl.get_centerline_error(X, Y)
+    X, Y = (151, 65)
+    s, err, iter = cl.get_projection_local(X, Y, 310)
 
+    print(iter)
     cl.plot(d=False, dd=False, points=[[X, Y], [cl.Gx(s), cl.Gy(s)]])
