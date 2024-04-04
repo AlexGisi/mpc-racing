@@ -41,6 +41,27 @@ class ParameterizedCenterline:
         if s > self.length:
             raise ValueError
         return self.spline_y.derivative().derivative()(s)
+    
+    def get_projection(self, X, Y, s0, alpha=0.01, epsilon=0.0001):
+        """
+        Orthogonal projection of the current position (X, Y) onto the centerline,
+        which is the result of the optimization problem s* = \min_{s \in [0, L]}
+        f(s), where f(s) = \frac{1}{2} || g(s) - [X Y]^T ||^2 is the cost, i.e.
+        the distance from (X,Y) to the centerline. We minimize it with gradient descent.
+
+        Distance is not convex in s! So if s0 is far from s* it will not converge correctly!
+        """
+        df = float('inf')
+        iters = 0
+        while abs(df) > epsilon:
+            df = (self.Gx(s0) - X)*self.dGx(s0) + (self.Gy(s0) - Y)*self.dGy(s0)
+            s1 = s0 - alpha * df  # Gradient descent step.
+            s0 = s1
+            iters += 1
+
+        error_centerline = (self.Gx(s1) - X)**2 + (self.Gy(s1) - Y)**2
+        return s1, error_centerline, iters
+
 
     def from_file(self, fp):
         with open(fp, 'rb') as f:
@@ -66,7 +87,7 @@ class ParameterizedCenterline:
         self.spline_y = make_interp_spline(s, y, bc_type="clamped")
         self.length = max(ss)
     
-    def plot(self, d=False, dd=False):
+    def plot(self, d=False, dd=False, points=None):
         subplot_n = 1 + d + dd
         fig = plt.figure()
 
@@ -86,6 +107,10 @@ class ParameterizedCenterline:
             plotddx, plotddy = self._get_plotxy(self.ddGx, self.ddGy)
             ax3.set_title("Double partials of x and y wrt s")
             ax3.plot(plotddx, plotddy, 'g-')
+        
+        if points is not None:
+            for p in points:
+                ax1.plot(p[0], p[1], 'ro', markersize=10)
 
         plt.tight_layout()
         plt.show()
@@ -100,4 +125,9 @@ class ParameterizedCenterline:
 if __name__ == '__main__':
     cl = ParameterizedCenterline()
     cl.from_file("../waypoints/shanghai_intl_circuit")
-    cl.plot(d=True, dd=True)
+
+    # Test centerline projection.
+    X, Y = (110, 100)
+    s, err = cl.get_centerline_error(X, Y)
+
+    cl.plot(d=False, dd=False, points=[[X, Y], [cl.Gx(s), cl.Gy(s)]])
