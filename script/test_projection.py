@@ -1,5 +1,7 @@
 """
-Test the two methods of obtaining the centerline projections for different values.
+Test the centerline projection method for reliability over different values.
+
+Conclusion: works well everywhere as long as you give it bounds.
 """
 import numpy as np
 from math import sqrt

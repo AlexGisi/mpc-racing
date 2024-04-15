@@ -57,13 +57,34 @@ class ParameterizedCenterline:
         ret = minimize_scalar(dist, bounds=bounds)
         return ret.x, dist(ret.x)
     
+    def unit_tangent(self, s):
+        dr = np.array([self.dGx(s), self.dGy(s)])
+        ut = dr / np.linalg.norm(dr)
+        return ut
+
     def unit_principal_normal(self, s):
         """
+        Return the unit vector orthogonal to the curve at s which forms
+        a right-hand coordinate system with the tangent vector.
+        
+        Using the defition, the unit principal normal vector is
+        found with
+
+        ddr = np.array([self.ddGx(s), self.ddGy(s)])
+        upn = ddr / np.linalg.norm(ddr)
+
         There seems to be some numerical issue with this due to higher
         order derivatives in interpolation, very notable on horizontal 
-        (across the x-axis) lines.
-
-        Return the unit vector orthogonal to the curve at s.
+        (across the x-axis) lines. The unit_tangent function seems
+        to be well-conditioned, so we simply use it and compute the
+        associated tangent.
+        """
+        ut_x, ut_y = self.unit_tangent(s)
+        return ut_y, -ut_x
+    
+    def unit_principal_normal1(self, s):
+        """
+        Do not use! Use unit_principal_normal.
         """
         ddr = np.array([self.ddGx(s), self.ddGy(s)])
         upn = ddr / np.linalg.norm(ddr)
@@ -142,3 +163,10 @@ if __name__ == '__main__':
     cl = ParameterizedCenterline()
     cl.from_file("waypoints/shanghai_intl_circuit")
     cl.plot(waypoints=True)
+
+    # Estimate initial progress of car, since it is spawned
+    # at (70, -115).
+    s_hat, _ = cl.projection(70.0, -115.0, bounds=[600, 610])
+    x, y = cl.Gx(s_hat), cl.Gy(s_hat)
+    print(s_hat)
+    print(x, y)
