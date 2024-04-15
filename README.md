@@ -1,3 +1,8 @@
+# autobots-race
+How to run:
+1. Start carla and change to the shanghai map, for example using the script `auxillary/carla.py`. 
+2. Run the GRAIC wrapper, for example using the script `killwrapper.py`.
+
 # GRAIC 2023
 Installation Documentation could be found [Here](https://docs.google.com/document/d/1O0thKd-WcQzPpEvyfJZmjEr0xCWvgUkzzftlyZxOi_A/edit?usp=sharing)
 
