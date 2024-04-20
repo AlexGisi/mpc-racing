@@ -29,8 +29,8 @@ class Agent():
         if self.progress is None:
             return None
         
-        lower = self.progress-2  % self.centerline.length
-        upper = self.progress+2 % self.centerline.length
+        lower = (self.progress-2)  % self.centerline.length
+        upper = (self.progress+2) % self.centerline.length
 
         return (lower, upper) if lower < upper else (upper, lower)
         
@@ -86,8 +86,8 @@ class Agent():
         self.steps += 1
         self.last_error = self.error
         self.cmd_steer = control.steer
-        if (self.steps % 10 == 0) and (self.steps > 1720):
-            breakpoint()
+        # if (self.steps % 10 == 0) and (self.steps > 1720):
+        #     breakpoint()
         self.logger.log(self)
 
         return control
