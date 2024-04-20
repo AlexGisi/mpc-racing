@@ -1,4 +1,6 @@
 *.txt
+data/
+*.csv
 
 .DS_Store
 
