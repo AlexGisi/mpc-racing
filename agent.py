@@ -11,9 +11,13 @@ class Agent():
         self.centerline = ParameterizedCenterline()
         self.centerline.from_file("/home/alex/Projects/graic/autobots-race/waypoints/shanghai_intl_circuit")
         self.progress = None  # Car is spawned in the middle of the track.
+        
         self.X = None
         self.Y = None
         self.yaw = None
+        self.vx = None
+        self.vy = None
+        
         self.steps = 0
         self.error = None
         self.last_error = 0
@@ -34,7 +38,7 @@ class Agent():
         upper = (self.progress+2) % self.centerline.length
 
         return (lower, upper) if lower < upper else (upper, lower)
-        
+
     def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary):
         """
         Execute one step of navigation. Times out in 10s.
@@ -48,7 +52,7 @@ class Agent():
             - Description:  List All future waypoints to reach in (x,y,z) format
         vel
             - Type:         carla.Vector3D 
-            - Description:  Ego's current velocity in (x, y, z) in m/s
+            - Description:  Ego's current velocity in (x, y, z) in m/s, in global coordinates
         transform
             - Type:         carla.Transform 
             - Description:  Ego's current transform
@@ -61,7 +65,12 @@ class Agent():
         """
         self.X = transform.location.x
         self.Y = transform.location.y
-        self.yaw = transform.rotation.yaw
+        self.yaw = np.deg2rad(transform.rotation.yaw)
+
+        # Velocities in vehicle coordinates (y is lateral).
+        # Positive lateral velocity is to the left.
+        self.vx = vel.x * np.cos(-self.yaw) - vel.y * np.sin(-self.yaw)
+        self.vy = vel.x * np.sin(-self.yaw) + vel.y * np.cos(-self.yaw)
 
         self.progress, dist = self.centerline.projection(self.X, self.Y, bounds=self.progress_bound())
         self.error = dist * self.centerline.error_sign(self.X, self.Y, self.progress)
@@ -72,24 +81,29 @@ class Agent():
 
         print("X: ", self.X)
         print("Y: ", self.Y)
+        print("Yaw: ", self.yaw)
+
+        print("vx: ", self.vx)
+        print('vy: ', self.vy)
 
         control = carla.VehicleControl()
 
-        ### PID control ###
+        ### PD control ###
         D = self.error - self.last_error
         P = self.error
-        I = self.cum_error
-        kD = 0.1
-        kP = 0.05
-        kI = 0.0 # Avoid integral windup
+        kD = 5
+        kP = 0.2
 
-        control.throttle = 0.4
-        control.steer = kD * D + kP * P + kI * I
+        control.throttle = 0.5
+        control.steer = kD * D + kP * P
         ### end PID control ###
+
+        control.steer = control.steer
         
         print("D: ", D)
         print("P: ", P)
-        print("I: ", I)
+        print("Dt: ", D*kD)
+        print("Pt: ", P*kP)
         print("control: ", control.throttle, control.steer)
 
         self.steps += 1
