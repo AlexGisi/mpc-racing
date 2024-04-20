@@ -17,6 +17,7 @@ class Agent():
         self.steps = 0
         self.error = None
         self.last_error = 0
+        self.cum_error = 0
         self.cmd_steer = 0
         self.logger = Logger("data-mydrive.csv")
 
@@ -74,18 +75,28 @@ class Agent():
 
         control = carla.VehicleControl()
 
-        derror = self.error - self.last_error
-        if self.steps > 1:
-            control.steer = self.error*0.35
-            control.throttle = 0.3
-        else:
-            control.steer = 0
+        ### PID control ###
+        D = self.error - self.last_error
+        P = self.error
+        I = self.cum_error
+        kD = 0.1
+        kP = 0.05
+        kI = 0.0 # Avoid integral windup
+
+        control.throttle = 0.4
+        control.steer = kD * D + kP * P + kI * I
+        ### end PID control ###
         
+        print("D: ", D)
+        print("P: ", P)
+        print("I: ", I)
         print("control: ", control.throttle, control.steer)
 
         self.steps += 1
         self.last_error = self.error
+        self.cum_error += self.error
         self.cmd_steer = control.steer
+
         self.logger.log(self)
 
         return control
