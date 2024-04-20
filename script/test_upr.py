@@ -35,7 +35,7 @@ def at_point(S, ax):
     ax.plot(track_x, track_y)
 
     ax.arrow(sx, sy, upr_dx, upr_dy, width=0.05, head_length=2)
-    ax.arrow(sx, sy, upr1_dx, upr1_dy, width=0.05, head_length=2, color="red")
+    # ax.arrow(sx, sy, upr1_dx, upr1_dy, width=0.05, head_length=2, color="red")
     ax.arrow(sx, sy, tn_dx, tn_dy, width=0.05, head_length=2)
     
     ax.set_aspect('equal', adjustable='box')
