@@ -75,10 +75,7 @@ class ParameterizedCenterline:
             print("Warning: local projection over with large bounds", bounds)
 
         dist = lambda s: sqrt((self.Gx(s) - X)**2 + (self.Gy(s) - Y)**2)
-        try:
-            ret = minimize_scalar(dist, bounds=bounds)
-        except ValueError:
-            breakpoint()
+        ret = minimize_scalar(dist, bounds=bounds)
         return ret.x, dist(ret.x)
     
     def projection_global(self, X, Y):

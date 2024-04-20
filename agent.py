@@ -86,8 +86,6 @@ class Agent():
         self.steps += 1
         self.last_error = self.error
         self.cmd_steer = control.steer
-        # if (self.steps % 10 == 0) and (self.steps > 1720):
-        #     breakpoint()
         self.logger.log(self)
 
         return control
