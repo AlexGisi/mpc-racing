@@ -9,7 +9,7 @@ CONFIG_FP = "/opt/carla-simulator/PythonAPI/util/config.py"
 
 print("Checking existing carla processes...")
 try:
-    subprocess.run(['pkill', '-f', 'carla-simulator'], check=True)
+    subprocess.run(['pkill', 'CarlaUE4'], check=True)
     subprocess.run(['pkill', '-f', 'scenario'], check=True)
     print("Processes killed.")
 except subprocess.CalledProcessError as e:
