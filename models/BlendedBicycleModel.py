@@ -1,16 +1,22 @@
+from typing import Type
 import numpy as np
-from kinematics_model import KinematicBicycleModel
-from dynamics_model import DynamicBicycleModel
+from KinematicBicycleModel import KinematicBicycleModel
+from DynamicBicycleModel import DynamicBicycleModel
+from State import State
+from VehicleParameters import VehicleParameters
 
 
 class BlendedBicycleModel:
+    def __init__(self, initial_state: Type[State]):
+        super().__init__(initial_state)
+
     def __init__(self, vblendmin, vblendmax, params):
         self.vblendmin = vblendmin
         self.vblendmax = vblendmax
         self.kinematic_model = KinematicBicycleModel(params['lf'], params['lr'], params['Ts'])
         self.dynamic_model = DynamicBicycleModel(params)
     
-    def predict_next_state(self, xk, uk, vk):
+    def step(self, xk, uk, vk):
         # Calculate the blend factor based on the vehicle's velocity vk
         λk = np.clip((vk - self.vblendmin) / (self.vblendmax - self.vblendmin), 0, 1)
         
