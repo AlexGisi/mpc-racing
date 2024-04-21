@@ -51,7 +51,7 @@ def plot_results(states_kinematic, states_dynamic, accel, steers, times):
     plt.grid(True)
 
     plt.subplot(2, 2, 4)
-    plt.plot(times, steers)
+    plt.plot(times, np.rad2deg(steers))
     plt.title("Steer commands")
     plt.grid(True)
 
@@ -59,16 +59,16 @@ def plot_results(states_kinematic, states_dynamic, accel, steers, times):
     plt.show()
 
 # Parameters
-initial_state = State(x=0, y=0, yaw=0, v_x=0, v_y=0, yaw_dot=0)
+initial_state = State(x=0, y=0, yaw=0, v_x=2, v_y=0, yaw_dot=0)
 kinematic_model = KinematicBicycleModel(initial_state)
 dynamic_model = DynamicBicycleModel(initial_state)
 
 # Simulation settings
-steps = 100
+steps = 1000
 dt = 0.1  # time step duration
 times = np.arange(0, steps*dt, step=dt)
-acceleration = np.exp(-times)
-steering_angle = np.sin(times)
+acceleration = 0 * times
+steering_angle = np.sin(times/10) / 2
 
 # Running simulations
 states_kinematic = simulate(kinematic_model, steps, dt, acceleration, steering_angle)

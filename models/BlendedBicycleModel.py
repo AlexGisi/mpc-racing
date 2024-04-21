@@ -1,3 +1,6 @@
+"""
+Haven't looked at this too closely yet.
+"""
 from typing import Type
 import numpy as np
 from KinematicBicycleModel import KinematicBicycleModel
