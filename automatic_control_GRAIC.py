@@ -862,7 +862,7 @@ def game_loop(args):
             ############################################
 
             end_waypoints = min(len(waypoints), idx + 50)
-            control = agent.run_step(filtered_obstacles, waypoints[idx:end_waypoints], vel, transform, boundary)
+            control = agent.run_step(filtered_obstacles, waypoints[idx:end_waypoints], vel, transform, boundary, hud.simulation_time)
             control.manual_gear_shift = False
             world.player.apply_control(control)
 

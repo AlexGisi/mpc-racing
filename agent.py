@@ -22,8 +22,14 @@ class Agent():
         self.error = None
         self.last_error = 0
         self.cum_error = 0
+
         self.cmd_steer = 0
-        self.logger = Logger("data-mydrive.csv")
+        self.cmd_throttle = 0
+
+        self.time = 0
+        self.dt = 0
+
+        self.logger = Logger("throttle-sin.csv")
 
     def progress_bound(self):
         """
@@ -39,7 +45,7 @@ class Agent():
 
         return (lower, upper) if lower < upper else (upper, lower)
 
-    def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary):
+    def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary, simulation_time):
         """
         Execute one step of navigation. Times out in 10s.
 
@@ -63,6 +69,9 @@ class Agent():
 
         Return: carla.VehicleControl()
         """
+        self.dt = simulation_time - self.time  # How long was the last step in sim time?
+        self.time = simulation_time
+
         self.X = transform.location.x
         self.Y = transform.location.y
         self.yaw = np.deg2rad(transform.rotation.yaw)
@@ -86,6 +95,8 @@ class Agent():
         print("vx: ", self.vx)
         print('vy: ', self.vy)
 
+        print("dt: ", self.dt)
+
         control = carla.VehicleControl()
 
         ### PD control ###
@@ -94,7 +105,7 @@ class Agent():
         kD = 5
         kP = 0.2
 
-        control.throttle = 0.5
+        control.throttle = np.sin(self.steps/50) / 2
         control.steer = kD * D + kP * P
         ### end PID control ###
 
@@ -109,7 +120,9 @@ class Agent():
         self.steps += 1
         self.last_error = self.error
         self.cum_error += self.error
+        
         self.cmd_steer = control.steer
+        self.cmd_throttle = control.throttle
 
         self.logger.log(self)
 

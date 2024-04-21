@@ -1,6 +1,6 @@
 import csv
 
-member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy',
+member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy', 'dt',
                 'progress', 'error', 'cmd_throttle', 'cmd_steer']
 
 class Logger:
