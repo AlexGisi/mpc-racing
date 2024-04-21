@@ -23,6 +23,7 @@ class Agent():
         self.last_error = 0
         self.cum_error = 0
         self.cmd_steer = 0
+        self.cmd_throttle = 0
         self.logger = Logger("data-mydrive.csv")
 
     def progress_bound(self):
@@ -110,6 +111,7 @@ class Agent():
         self.last_error = self.error
         self.cum_error += self.error
         self.cmd_steer = control.steer
+        self.cmd_throttle = control.throttle
 
         self.logger.log(self)
 
