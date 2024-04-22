@@ -1,7 +1,9 @@
 import csv
 
 member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy',
-                'progress', 'error', 'cmd_throttle', 'cmd_steer']
+                'progress', 'error', 'cmd_throttle', 'cmd_steer',
+                'next_left_lane_point_x', 'next_left_lane_point_y', 'next_right_lane_point_x',
+                'next_right_lane_point_y']
 
 class Logger:
     def __init__(self, fp) -> None:

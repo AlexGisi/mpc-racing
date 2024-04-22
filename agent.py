@@ -17,6 +17,14 @@ class Agent():
         self.yaw = None
         self.vx = None
         self.vy = None
+
+        self.left_lane_points = None
+        self.right_lane_points = None
+        
+        self.next_left_lane_point_x = None
+        self.next_left_lane_point_y = None
+        self.next_right_lane_point_x = None
+        self.next_right_lane_point_y = None
         
         self.steps = 0
         self.error = None
@@ -67,6 +75,15 @@ class Agent():
         self.X = transform.location.x
         self.Y = transform.location.y
         self.yaw = np.deg2rad(transform.rotation.yaw)
+
+        self.left_lane_points = [(waypoint.transform.location.x, waypoint.transform.location.y) for waypoint in boundary[0]]
+        self.right_lane_points = [(waypoint.transform.location.x, waypoint.transform.location.y) for waypoint in boundary[1]]
+        
+        self.next_left_lane_point_x = self.left_lane_points[0][0]
+        self.next_left_lane_point_y = self.left_lane_points[0][1]
+        
+        self.next_right_lane_point_x = self.right_lane_points[0][0]
+        self.next_right_lane_point_y = self.right_lane_points[0][1]
 
         # Velocities in vehicle coordinates (y is lateral).
         # Positive lateral velocity is to the left.
