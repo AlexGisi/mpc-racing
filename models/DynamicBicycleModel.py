@@ -1,3 +1,7 @@
+"""
+Not implemented correctly or something, speed blows up. todo: fix and test.
+"""
+
 from typing import Type
 import numpy as np
 from models.Model import Model
@@ -8,18 +12,6 @@ from models.State import State
 class DynamicBicycleModel(Model):
     def __init__(self, initial_state: Type[State]):
         super().__init__(initial_state)
-
-    # TODO - ID these
-    def Fx(self, throttle: float, steer: float) -> float:
-        """
-        steer: command in [-1, 1]
-        throttle: command in [-1, 1]
-        Longitudinal acceleration under a given throttle input. 
-        
-        Identification script in scripts/id_Fx.py, need to check
-        that analysis.
-        """
-        pass
 
     def step(self, throttle_cmd: float, steer_cmd: float) -> Type[State]:
         # Unpack parameters for easier access

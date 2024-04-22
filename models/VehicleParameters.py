@@ -28,4 +28,4 @@ class VehicleParameters:
     g: float = 9.81  # Acceleration due to gravity in meters per second squared
     Vblendmin: float = 2  # Minimum blending speed in meters per second
     Vblendmax: float = 5  # Maximum blending speed in meters per second
-    Ts: int = 0.01  # Sampling time in seconds
+    Ts: int = 0.1  # Sampling time in seconds
