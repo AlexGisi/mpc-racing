@@ -1,3 +1,4 @@
+from typing import List
 import pickle
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize_scalar, dual_annealing
@@ -45,6 +46,26 @@ class ParameterizedCenterline:
             raise ValueError
         return self.spline_y.derivative().derivative()(s)
     
+    def x_as_coeffs(self, s, lookahead) -> List[float]:
+        """
+        s: current progress
+        lookahead: how far ahead should I get points for interpolation
+        """
+        interps = np.arange(0, lookahead, 2) + s
+        interpx = np.array([self.Gx(s) for s in interps])
+        coeffs = np.polyfit(interps, interpx, deg=10)
+        return list(coeffs)
+
+    def y_as_coeffs(self, s, lookahead) -> List[float]:
+        """
+        s: current progress
+        lookahead: how far ahead should I get points for interpolation
+        """
+        interps = np.arange(0, lookahead, 6) + s
+        interpy = np.array([self.Gy(s) for s in interps])
+        coeffs = np.polyfit(interps, interpy, deg=10)
+        return list(coeffs)
+
     def projection(self, X, Y, bounds=None):
         """
         Interface which wraps both projection functions and chooses the
@@ -130,7 +151,6 @@ class ParameterizedCenterline:
         upn = ddr / np.linalg.norm(ddr)
         return upn[0], upn[1]
 
-
     def from_file(self, fp):
         with open(fp, 'rb') as f:
             waypoints = pickle.load(f)
@@ -160,12 +180,20 @@ class ParameterizedCenterline:
         self.length = ss[-1]
         self.waypoints = list(zip(x, y))
     
-    def plot(self, d=False, dd=False, points=None, labels=None, waypoints=False):
+    def plot(self,
+             d=False, 
+             dd=False,
+             between=None,
+             show=True,
+             points=None,
+             pointsize=10,
+             labels=None, 
+             waypoints=False):
         subplot_n = 1 + d + dd
         fig = plt.figure()
 
         ax1 = fig.add_subplot(subplot_n, 1, 1)
-        plotx, ploty = self._get_plotxy(self.Gx, self.Gy)
+        plotx, ploty = self._get_plotxy(self.Gx, self.Gy, between=between)
         ax1.set_title("Waypoints")
         ax1.plot(plotx, ploty, 'r-')
 
@@ -189,15 +217,20 @@ class ParameterizedCenterline:
         if points is not None:
             colors = ['r', 'b', 'g']
             for i, p in enumerate(points):
-                ax1.plot(p[0], p[1], f'{colors[i % len(colors)]}o', markersize=10)
+                ax1.plot(p[0], p[1], f'{colors[i % len(colors)]}o', markersize=pointsize)
                 if labels is not None:
                     ax1.text(p[0], p[1], labels[i], fontsize=9, ha='right', va='bottom')
 
         plt.tight_layout()
-        plt.show()
+        if show is True:
+            plt.show()
+            
+        return fig
 
-    def _get_plotxy(self, funcx, funcy, points_per_unit=10):
-        plots = np.linspace(0, self.length, num=floor(self.length)*points_per_unit)
+    def _get_plotxy(self, funcx, funcy, points_per_unit=10, between=None):
+        lower = between[0] if between is not None else 0
+        upper = between[1] if between is not None else self.length
+        plots = np.linspace(lower, upper, num=floor(upper-lower)*points_per_unit)
         plotx = [funcx(s) for s in plots] 
         ploty = [funcy(s) for s in plots]
         return plotx, ploty
@@ -206,5 +239,7 @@ class ParameterizedCenterline:
 if __name__ == '__main__':
     cl = ParameterizedCenterline()
     cl.from_file("waypoints/shanghai_intl_circuit")
+    breakpoint()
+
     cl.plot(waypoints=True)
     
