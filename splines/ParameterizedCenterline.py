@@ -15,35 +15,29 @@ class ParameterizedCenterline:
         self.spline_y = None
         self.length = None
         self.waypoints = None
-
+        
     def Gx(self, s):
-        if s > self.length:
-            raise ValueError
+        s = s % self.length
         return self.spline_x(s)
     
     def Gy(self, s):
-        if s > self.length:
-            raise ValueError
+        s = s % self.length
         return self.spline_y(s)
     
     def dGx(self, s):
-        if s > self.length:
-            raise ValueError
+        s = s % self.length
         return self.spline_x.derivative()(s)
     
     def dGy(self, s):
-        if s > self.length:
-            raise ValueError
+        s = s % self.length
         return self.spline_y.derivative()(s)
     
     def ddGx(self, s):
-        if s > self.length:
-            raise ValueError
+        s = s % self.length
         return self.spline_x.derivative().derivative()(s)
     
     def ddGy(self, s):
-        if s > self.length:
-            raise ValueError
+        s = s % self.length
         return self.spline_y.derivative().derivative()(s)
     
     def x_as_coeffs(self, s, lookahead) -> List[float]:
