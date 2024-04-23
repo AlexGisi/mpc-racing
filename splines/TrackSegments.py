@@ -34,12 +34,12 @@ class TrackSegments:
         assert(i < self.n_cp)
         return self.bounds[i]
     
-    def plot(self, line):
+    def plot(self):
         subplot_n = 1
         fig = plt.figure()
 
         ax1 = fig.add_subplot(subplot_n, 1, 1)
-        plotx, ploty = line._get_plotxy(line.Gx, line.Gy)
+        plotx, ploty = self.line._get_plotxy(self.line.Gx, self.line.Gy)
         ax1.set_title("x and y wrt s")
         ax1.plot(plotx, ploty, 'r-')
 
@@ -47,8 +47,8 @@ class TrackSegments:
         cp_y = []
 
         for bound in self.bounds:
-            cp_x.append(line.Gx(bound))
-            cp_y.append(line.Gy(bound))
+            cp_x.append(self.line.Gx(bound))
+            cp_y.append(self.line.Gy(bound))
         ax1.scatter(cp_x, cp_y, s=50, c='blue')
 
         plt.tight_layout()
@@ -62,4 +62,4 @@ if __name__ == '__main__':
 
     segments = TrackSegments(line, n_cp, 30, 1500, 1500, 250)
 
-    segments.plot(line)
+    segments.plot()

@@ -6,8 +6,7 @@ from scipy.interpolate import make_interp_spline
 from math import sqrt, floor
 import numpy as np
 from numpy.linalg import norm
-from splines.util import euclidean, midpoint
-
+from util import euclidean, midpoint
 
 class ParameterizedCenterline:
     def __init__(self):
@@ -249,7 +248,5 @@ class ParameterizedCenterline:
 if __name__ == '__main__':
     cl = ParameterizedCenterline()
     cl.from_file("waypoints/shanghai_intl_circuit")
-    breakpoint()
-
     cl.plot(waypoints=True)
     
