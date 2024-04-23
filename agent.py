@@ -89,16 +89,10 @@ class Agent():
         self.delta = np.arctan2(2*WHEELBASE*np.sin(self.alpha), lookahead)
         return self.delta
     
-    def get_target_vel(self, lookahead):
-        # MIN_THROTTLE = 0.1
-        # MAX_THROTTLE = 1.0
-        # MAX_KAPPA = 0.12
-        # mean_kappa = self.centerline.mean_curvature(self.progress, lookahead, N=100)
-        # print("mean_kappa: ", mean_kappa)
-        # curv_param = mean_kappa / MAX_KAPPA
-        # throttle = np.clip(curv_param * MIN_THROTTLE + (1 - curv_param) * MAX_THROTTLE, MIN_THROTTLE, MAX_THROTTLE)
-        k = 0.8
-        self.kappa = self.centerline.mean_curvature(self.progress, lookahead)
+    def get_target_vel(self, lookahead, zeta=15):
+        lower = np.clip(self.progress+zeta, lookahead, 10000)
+        k = 1.2
+        self.kappa = self.centerline.mean_curvature(lower, lookahead)
         self.target_vel = np.clip(k*np.sqrt(9.81 / self.kappa), 10, 100)
 
         return self.target_vel, self.kappa
@@ -170,9 +164,9 @@ class Agent():
         ### end PID control ###
 
         lookahead = 3
-        control.steer = self.pp_delta(lookahead)
+        control.steer = self.pp_delta(lookahead) + self.error*0.05 + (self.last_error - self.error)*1
 
-        vel_lookahead = (self.vel**2 / 12)
+        vel_lookahead = (self.vel**2 / 20)
         target_vel, kappa = self.get_target_vel(vel_lookahead)
         throttle_error = (target_vel - self.vel)
         throttle = np.clip(throttle_error*kP_throttle + (throttle_error - self.last_throttle_error) * kD_throttle, -1, 1)
