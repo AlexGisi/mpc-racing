@@ -122,6 +122,16 @@ class ParameterizedCenterline:
         dr = np.array([self.dGx(s), self.dGy(s)])
         ut = dr / np.linalg.norm(dr)
         return ut
+    
+    def curvature(self, s):
+        dx = self.dGx(s)
+        dy = self.dGy(s)
+
+        ddx = self.ddGx(s)
+        ddy = self.ddGy(s)
+
+        kappa = np.abs(dx * ddy - dy * ddx)
+        return kappa
 
     def unit_principal_normal(self, s):
         """

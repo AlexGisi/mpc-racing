@@ -1,5 +1,7 @@
 *.txt
 data/
+data-mydrive.csv
+throttle-sin.csv
 
 .DS_Store
 
