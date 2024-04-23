@@ -105,8 +105,10 @@ plt.ylabel('Residuals')
 plt.axhline(y=0, color='red', linestyle='--')  # Add a horizontal line at zero
 plt.show()
 
-def predict(throttle, steer):
-    return 14470.41348872 * abs(throttle) + -47.77210478 * steer + -4600.14374037663
+def Fx(throttle, steer):
+    return (14470.41348872 * abs(throttle) 
+            + -47.77210478 * steer 
+            - 4600.14374037663)
 
 df = df.assign(pred_Fx=lambda row: predict(row['cmd_throttle'], row['cmd_steer']))
 r22 = r2_score(y, df['pred_Fx'])
@@ -140,5 +142,7 @@ ax.plot_surface(xx, yy, zz, color='b', alpha=0.5)  # semi-transparent blue plane
 ax.set_xlabel('Command Throttle')
 ax.set_ylabel('Command Steer')
 ax.set_zlabel('Fx')
+
+plt.title("Fx under given throttle and steer commands")
 
 plt.show()

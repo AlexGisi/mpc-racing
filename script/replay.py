@@ -52,9 +52,12 @@ def update_plot(row, ax, track_line, car_point):
     steer_arrow = ax.arrow(row['X'], row['Y'], steer_vec[0], steer_vec[1], head_width=0.5,
                            head_length=5*row['cmd_steer'])
 
-    ax.set_title(f"step = {row['steps']}\nerror = -, rec_error={row['error']}\ncmd_steer: {row['cmd_steer']}")
-    # ax.set_xlim([row['X']-20, row['X']+20])
-    # ax.set_ylim([row['Y']-20, row['Y']+20])
+    ax.set_title(f"step = {row['steps']}\nrec_error={row['error']} \
+                 \ncmd_throttle: {row['cmd_throttle']}, cmd_steer: {row['cmd_steer']}, cmd_brake: {row['cmd_brake']} \
+                 \nkappa: {row['kappa']}, alpha: {row['alpha']}, delta: {row['delta']}\n \
+                 lookahead: {row['lookahead']}")
+    ax.set_xlim([row['X']-100, row['X']+100])
+    ax.set_ylim([row['Y']-100, row['Y']+100])
     ax.autoscale_view(True,True,True)  # Autoscale
     fig.canvas.draw()
     fig.canvas.flush_events()
