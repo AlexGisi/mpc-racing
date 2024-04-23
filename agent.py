@@ -159,14 +159,14 @@ class Agent():
         kP_steer = 1
         kD_steer = 1
 
-        kP_throttle = 0.4
+        kP_throttle = 0.8
         kD_throttle = 1
         ### end PID control ###
 
         lookahead = 3
         control.steer = self.pp_delta(lookahead) + self.error*0.05 + (self.last_error - self.error)*1
 
-        vel_lookahead = (self.vel**2 / 20)
+        vel_lookahead = (self.vel**2 / 40)
         target_vel, kappa = self.get_target_vel(vel_lookahead)
         throttle_error = (target_vel - self.vel)
         throttle = np.clip(throttle_error*kP_throttle + (throttle_error - self.last_throttle_error) * kD_throttle, -1, 1)
