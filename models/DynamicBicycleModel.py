@@ -27,10 +27,11 @@ class DynamicBicycleModel(Model):
 
         # Current state unpacking
         x, y, yaw, v_x, v_y, yaw_dot = self.state.x, self.state.y, self.state.yaw, self.state.v_x, self.state.v_y, self.state.yaw_dot
+        vel = np.hypot(v_x, v_y)
 
         # Convert commands to physical values.
-        Fx = self.Fx(throttle_cmd, steer_cmd)
-        delta = self.steer_cmd_to_angle(steer_cmd)
+        Fx = self.Fx(throttle_cmd)
+        delta = self.steer_cmd_to_angle(steer_cmd, vel)
 
         # Convert body frame velocities to global frame
         v = np.sqrt(v_x**2 + v_y**2)

@@ -24,18 +24,7 @@ class KinematicBicycleModel(Model):
         
         # Convert commands to physical values.
         delta = self.steer_cmd_to_angle(steer_cmd)
-        Fx = self.Fx(throttle_cmd, steer_cmd)
-
-        # Kinematic model equations
-        v = np.sqrt(v_x**2 + v_y**2)
-        
-        # Update the state equations
-        # x_new = x + v * np.cos(yaw + beta) * Ts
-        # y_new = y + v * np.sin(yaw + beta) * Ts
-        # yaw_new = yaw + (v / lr) * np.sin(beta) * Ts
-        # v_x_new = v_x + a * np.cos(yaw) * Ts
-        # v_y_new = v_y + a * np.sin(yaw) * Ts
-        # yaw_dot_new = (v / lr) * np.sin(beta)
+        Fx = self.Fx(throttle_cmd)
 
         x_new = x + (v_x * np.cos(yaw) - v_y * np.sin(yaw)) * Ts
         y_new = y + (v_x * np.sin(yaw) + v_y * np.cos(yaw)) * Ts

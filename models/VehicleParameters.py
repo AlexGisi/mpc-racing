@@ -4,19 +4,29 @@ from dataclasses import dataclass
 class VehicleParameters:
     # FST10d model parameters for the kinematic, dynamic, and blended models.
     
-    m: float = 1847  # Vehicle mass in kilograms - I VERIFIED IN CARLA
+    # General car parameters
+    m: float = 1845.0  # Vehicle mass in kilograms
+    max_steer = 70  # Deg
+    min_steer = -70  # Deg
 
-    # Need these (probably can get from carla/api)
-    Iz: float = 80  # Moment of inertia around the z-axis in kilogram meter squared
-    lf: float = 0.832  # Distance from the center of mass to the front axle in meters
-    lr: float = 0.708  # Distance from the center of mass to the rear axle in meters
+    # For Fx
+    eta_motor = 0.9 # (technically it changes significantly with torque curve)
+    T_max = 743.0  # Max value on torque curve (N*m)
+    r_wheel = 0.37 # (m)
+    R = 9.0  # transmission gear ratio
+    rho = 1.225  # air density (at sea level)
+    C_d = 0.23  # drag coefficient (via teslaoracle.com)
+    A_f = 2.2  # Frontal area (estimate)
+    C_roll = 0.012  # Roll coefficient (confident estimate)
 
-    # Don't need, could be nice
-    Tmax: float = 21  # Maximum torque produced by the motors in Newton meters
+    # For dynamic model
+    Iz: float = 80  # Iz around z-axis in (kg m^2)
+    lf: float = 1.4  # Center of mass to the front axle (m) (informed guess)
+    lr: float = 1.4  # Center of mass to the rear axle (m) (informed guess)
     
     # Need to ID
-    Cf: float = 0.092  # Cornering stiffness coefficient of the front tires, dimensionless
-    Cr: float = 0.092  # Cornering stiffness coefficient of the rear tires, dimensionless
+    Cf: float = 0.092  # Cornering stiffness coefficient, front tires
+    Cr: float = 0.092  # Cornering stiffness coefficient,  rear tires
 
     # Don't need, would be nice but using linear tire model for now
     Bf: int = 10  # Pacejka tire model coefficient Bf, dimensionless

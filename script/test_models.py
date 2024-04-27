@@ -1,5 +1,8 @@
 """
 Current script verifies kinematic model, need to verify dynamic.
+
+Honestly we are using friction and things so this is not even a good
+comparison, instead see the scripts where I compare with actual carla data
 """
 
 from models.KinematicBicycleModel import KinematicBicycleModel
