@@ -42,7 +42,7 @@ class Agent():
         self.cmd_steer = 0
         self.cmd_throttle = 0
         self.cmd_break = 0
-        self.logger = Logger("data-mydrive.csv")
+        self.logger = Logger("fast-drive.csv")
 
     def progress_bound(self):
         """
@@ -91,7 +91,7 @@ class Agent():
     
     def get_target_vel(self, lookahead, zeta=15):
         lower = np.clip(self.progress+zeta, lookahead, 10000)
-        k = 1.2
+        k = 1.2  # k=1.2 is reasonable aggressive.
         self.kappa = self.centerline.mean_curvature(lower, lookahead)
         self.target_vel = np.clip(k*np.sqrt(9.81 / self.kappa), 10, 100)
 
@@ -146,13 +146,6 @@ class Agent():
         print(self.steps)
         print("progress: ", self.progress)
 
-        # print("X: ", self.X)
-        # print("Y: ", self.Y)
-        # print("Yaw: ", self.yaw)
-
-        # print("vx: ", self.vx)
-        # print('vy: ', self.vy)
-
         control = carla.VehicleControl()
 
         ### PD control ###
@@ -180,7 +173,6 @@ class Agent():
         print("kappa: ", kappa)
         print("vel_lookahead: ", vel_lookahead)
         print("control: ", control.throttle, control.steer, control.brake)
-        # print("lookahead: ", lookahead)
 
         self.steps += 1
         self.last_error = self.error
