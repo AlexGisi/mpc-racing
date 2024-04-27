@@ -25,17 +25,17 @@ class VehicleParameters:
     lr: float = 1.4  # Center of mass to the rear axle (m) (informed guess)
     
     # Need to ID
-    Cf: float = 0.092  # Cornering stiffness coefficient, front tires
-    Cr: float = 0.092  # Cornering stiffness coefficient,  rear tires
+    Cf: float = 2  #3 Cornering stiffness coefficient, front tires
+    Cr: float = 2  # Cornering stiffness coefficient,  rear tires
 
     # Don't need, would be nice but using linear tire model for now
-    Bf: int = 10  # Pacejka tire model coefficient Bf, dimensionless
-    Br: int = 10  # Pacejka tire model coefficient Br, dimensionless
-    Cf: int = 138  # Pacejka tire model coefficient Cf, dimensionless 
-    Df: int = 1500  # Pacejka tire model coefficient Df in Newtons  
-    Dr: int = 1500  # Pacejka tire model coefficient Dr in Newtons 
+    Bf: int = 15  # Pacejka tire model coefficient Bf, dimensionless
+    Br: int = 15  # Pacejka tire model coefficient Br, dimensionless
+    Cf: int = 1.4  # Pacejka tire model coefficient Cf, dimensionless 
+    Df: int = 4524.86   # Pacejka tire model coefficient Df in Newtons  
+    Dr: int = 4524.86   # Pacejka tire model coefficient Dr in Newtons 
 
     g: float = 9.81  # Acceleration due to gravity in meters per second squared
-    Vblendmin: float = 2  # Minimum blending speed in meters per second
-    Vblendmax: float = 5  # Maximum blending speed in meters per second
+    Vblendmin: float = 10  # Minimum blending speed in meters per second
+    Vblendmax: float = 40  # Maximum blending speed in meters per second
     Ts: int = 0.1  # Sampling time in seconds
