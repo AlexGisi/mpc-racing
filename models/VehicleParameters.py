@@ -19,7 +19,7 @@ class VehicleParameters:
     A_f = 2.2  # Frontal area (via internet)
     C_roll = 0.012  # Roll coefficient (confident estimate)
     max_rpm = 15000
-    regen_brake_accel = 0.2  # (g)
+    regen_brake_accel = 0.2  # applied when throttle==brake==0 (g)
 
     # For dynamic model
     Iz: float = 3960.0  # Iz around z-axis in (kg m^2) (from modeling it as a prism)

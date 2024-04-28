@@ -23,9 +23,9 @@ class Model:
             regen_brake_force = 0
 
         # The motor efficiency depends on the rpm, as described by the throttle curve
-        # in model3_data.py.
+        # in model3_data.py. 
         eta = self.params.eta_motor
-        rpm = self.params.max_rpm * throttle * self.params.R
+        rpm = self.params.max_rpm * np.abs(throttle) * self.params.R
         if rpm < 9000:
             eta = 1.0
         elif rpm < 9500:
@@ -47,6 +47,8 @@ class Model:
         info['drag'] = drag_force
         info['rolling_resistance'] = rolling_resistance
         info['regen_brake'] = regen_brake_force
+        info['eta'] = eta
+        info['rpm'] = rpm
 
         return wheel_force - drag_force - rolling_resistance - regen_brake_force, info
 

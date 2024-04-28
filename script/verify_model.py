@@ -5,7 +5,7 @@ from models.KinematicBicycleModel import KinematicBicycleModel
 from models.DynamicBicycleModel import DynamicBicycleModel
 from models.State import State
 
-START_IDX = 2300
+START_IDX = 1400
 PREDICTION_HORIZON = 100
 PRED_EVERY = 1
 
@@ -143,8 +143,17 @@ axs[0, 3].set_ylabel("Angle (deg)")
 axs[0, 3].grid(True)
 axs[0, 3].legend(prop={'size': 6})
 
-axs[1, 3].axis('off')
-axs[2, 3].axis('off')
+axs[1, 3].plot(sim_steps[1:], [i['Fx_info']['eta'] for i in infos[1:]])
+axs[1, 3].set_title("Motor efficiency over time")
+axs[1, 3].set_xlabel("Step")
+axs[1, 3].set_ylabel("Efficiency")
+axs[1, 3].grid(True)
+
+axs[2, 3].plot(sim_steps[1:], [i['Fx_info']['rpm'] for i in infos[1:]])
+axs[2, 3].set_title("Estimated motor rpm over time")
+axs[2, 3].set_xlabel("Step")
+axs[2, 3].set_ylabel("RPM")
+axs[2, 3].grid(True)
 
 axs[0, 4].plot(sim_steps[1:], [i['Fx_info']['wheel'] / model.params.m for i in infos[1:]])
 axs[0, 4].set_title("Longitudinal acceleration due to wheel force")
