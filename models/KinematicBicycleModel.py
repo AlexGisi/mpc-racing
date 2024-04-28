@@ -8,7 +8,7 @@ class KinematicBicycleModel(Model):
     def __init__(self, initial_state: Type[State]):
         super().__init__(initial_state)
 
-    def step(self, throttle_cmd: float, steer_cmd: float) -> Type[State]:
+    def step(self, throttle_cmd: float, steer_cmd: float, dt=None) -> Type[State]:
         """
         Calculate the next state using the kinematic bicycle model.
         """
@@ -16,7 +16,7 @@ class KinematicBicycleModel(Model):
         params = self.params
         lf = params.lf
         lr = params.lr
-        Ts = params.Ts
+        Ts = params.Ts if dt is None else dt
         m = params.m
 
         # Current state unpacking

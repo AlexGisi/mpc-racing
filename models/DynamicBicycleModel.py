@@ -13,17 +13,16 @@ class DynamicBicycleModel(Model):
     def __init__(self, initial_state: Type[State]):
         super().__init__(initial_state)
 
-    def step(self, throttle_cmd: float, steer_cmd: float) -> Type[State]:
+    def step(self, throttle_cmd: float, steer_cmd: float, dt=None) -> Type[State]:
         # Unpack parameters for easier access
         params = self.params
         m = params.m
         Iz = params.Iz
         lf = params.lf
         lr = params.lr
-        g = params.g
         Cf = params.Cf
         Cr = params.Cr
-        Ts = params.Ts
+        Ts = params.Ts if dt is None else dt
 
         # Current state unpacking
         x, y, yaw, v_x, v_y, yaw_dot = self.state.x, self.state.y, self.state.yaw, self.state.v_x, self.state.v_y, self.state.yaw_dot

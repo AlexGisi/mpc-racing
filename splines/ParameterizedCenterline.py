@@ -6,7 +6,7 @@ from scipy.interpolate import make_interp_spline
 from math import sqrt, floor
 import numpy as np
 from numpy.linalg import norm
-from util import euclidean, midpoint
+from splines.util import euclidean, midpoint
 
 class ParameterizedCenterline:
     def __init__(self):

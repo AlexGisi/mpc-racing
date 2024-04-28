@@ -5,7 +5,10 @@ Honestly we are using friction and things so this is not even a good
 comparison, instead see the scripts where I compare with actual carla data
 """
 
-from models.KinematicBicycleModel import KinematicBicycleModel
+from models.KinematicBicycleModel import KinematicBicycleModel        # See Vehicle Dynamics And Control (2005) by Rajamani, page 31.
+        # Calculate tire velocity angle at front and rear.
+        theta_Vf = np.arctan2((v_y + lf * yaw_dot), v_x)
+        theta_Vr = np.arctan2((v_y - lr * yaw_dot), v_x)
 from models.DynamicBicycleModel import DynamicBicycleModel
 from models.State import State
 import numpy as np
