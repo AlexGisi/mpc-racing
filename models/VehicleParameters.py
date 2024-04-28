@@ -6,8 +6,8 @@ class VehicleParameters:
     
     # General car parameters
     m: float = 1845.0  # Vehicle mass in kilograms
-    max_steer = 70  # Deg
-    min_steer = -70  # Deg
+    max_steer = 70.0  # Deg
+    min_steer = -70.0  # Deg
 
     # For Fx
     eta_motor = 0.9 # (technically it changes significantly with torque curve)
@@ -16,24 +16,26 @@ class VehicleParameters:
     R = 9.0  # transmission gear ratio
     rho = 1.225  # air density (at sea level)
     C_d = 0.23  # drag coefficient (via teslaoracle.com)
-    A_f = 2.2  # Frontal area (estimate)
+    A_f = 2.2  # Frontal area (via internet)
     C_roll = 0.012  # Roll coefficient (confident estimate)
+    max_rpm = 15000
+    regen_brake_accel = 0.2  # (g)
 
     # For dynamic model
-    Iz: float = 80  # Iz around z-axis in (kg m^2)
-    lf: float = 1.4  # Center of mass to the front axle (m) (informed guess)
-    lr: float = 1.4  # Center of mass to the rear axle (m) (informed guess)
+    Iz: float = 3960.0  # Iz around z-axis in (kg m^2) (from modeling it as a prism)
+    lf: float = 0.8  # Center of mass to the front axle (m) (trial and error)
+    lr: float = 2  # Center of mass to the rear axle (m) (trial and error)
     
     # Need to ID
-    Cf: float = 2  #3 Cornering stiffness coefficient, front tires
-    Cr: float = 2  # Cornering stiffness coefficient,  rear tires
+    Cf: float = 200_000  # Cornering stiffness coefficient, front tires (trial and error)
+    Cr: float = 200_000  # Cornering stiffness coefficient, rear tires (trial and error)
 
     # Don't need, would be nice but using linear tire model for now
-    Bf: int = 15  # Pacejka tire model coefficient Bf, dimensionless
-    Br: int = 15  # Pacejka tire model coefficient Br, dimensionless
-    Cf: int = 1.4  # Pacejka tire model coefficient Cf, dimensionless 
-    Df: int = 4524.86   # Pacejka tire model coefficient Df in Newtons  
-    Dr: int = 4524.86   # Pacejka tire model coefficient Dr in Newtons 
+    # Bf: int = 15  # Pacejka tire model coefficient Bf, dimensionless
+    # Br: int = 15  # Pacejka tire model coefficient Br, dimensionless
+    # Cf: int = 1.4  # Pacejka tire model coefficient Cf, dimensionless 
+    # Df: int = 4524.86   # Pacejka tire model coefficient Df in Newtons  
+    # Dr: int = 4524.86   # Pacejka tire model coefficient Dr in Newtons 
 
     g: float = 9.81  # Acceleration due to gravity in meters per second squared
     Vblendmin: float = 10  # Minimum blending speed in meters per second

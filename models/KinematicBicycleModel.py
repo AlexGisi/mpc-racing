@@ -36,5 +36,8 @@ class KinematicBicycleModel(Model):
 
         # Update the state
         self.state = State(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)
-
+    
         return self.state
+    
+    def __repr__(self) -> str:
+        return "KinematicBicycleModel"

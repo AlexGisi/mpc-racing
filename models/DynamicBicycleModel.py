@@ -13,28 +13,26 @@ class DynamicBicycleModel(Model):
     def __init__(self, initial_state: Type[State]):
         super().__init__(initial_state)
 
-    def step(self, throttle_cmd: float, steer_cmd: float, dt=None) -> Type[State]:
+    def step(self, throttle_cmd: float, steer_cmd: float,
+             dt=None, Cr=None, Cf=None) -> Type[State]:
+        info = {}
+
         # Unpack parameters for easier access
         params = self.params
         m = params.m
         Iz = params.Iz
         lf = params.lf
         lr = params.lr
-        Cf = params.Cf
-        Cr = params.Cr
+        Cf = params.Cf if Cf is None else Cf
+        Cr = params.Cr if Cr is None else Cr
         Ts = params.Ts if dt is None else dt
 
         # Current state unpacking
         x, y, yaw, v_x, v_y, yaw_dot = self.state.x, self.state.y, self.state.yaw, self.state.v_x, self.state.v_y, self.state.yaw_dot
-        vel = np.hypot(v_x, v_y)
 
         # Convert commands to physical values.
-        Fx = self.Fx(throttle_cmd)
-        delta = self.steer_cmd_to_angle(steer_cmd, vel)
-
-        # Convert body frame velocities to global frame
-        v = np.sqrt(v_x**2 + v_y**2)
-        beta = np.arctan2(lr * yaw_dot, v)  # Slip angle at center of mass
+        Fx, Fx_info = self.Fx(throttle_cmd)
+        delta = self.steer_cmd_to_angle(steer_cmd)
 
         # See Vehicle Dynamics And Control (2005) by Rajamani, page 31.
         # Calculate tire velocity angle at front and rear.
@@ -47,9 +45,9 @@ class DynamicBicycleModel(Model):
 
         # Dynamics equations
         # See "Online Learning of MPC for Autonomous Racing" by Costa et al
-        v_x_dot = ( (Fx - Fyf*np.sin(delta)) / m ) + v_y * yaw_dot
-        v_y_dot = ((Fyf*np.cos(delta) + Fyr) / m) - v_x * yaw_dot
-        yaw_dot_dot = (Fyf*np.cos(delta)*lf - Fyr*lr) / Iz
+        v_x_dot = ( (Fx - Fyf*np.sin(delta)) / m ) + (v_y * yaw_dot)
+        v_y_dot = ((Fyf*np.cos(delta) + Fyr) / m) - (v_x * yaw_dot)
+        yaw_dot_dot = ( (Fyf*np.cos(delta)*lf) - (Fyr*lr)) / Iz
 
         # Integrate to find new state
         x_new = x + (v_x * np.cos(yaw) - v_y * np.sin(yaw)) * Ts
@@ -61,5 +59,13 @@ class DynamicBicycleModel(Model):
 
         # Update the state
         self.state = State(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)
+        info['Fx'] = Fx
+        info['Fyf'] = Fyf
+        info['Fyr'] = Fyr
+        info['delta'] = np.rad2deg(delta)
+        info['Fx_info'] = Fx_info
 
-        return self.state
+        return self.state, info
+
+    def __repr__(self) -> str:
+        return "DynamicBicycleModel"

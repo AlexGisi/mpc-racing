@@ -1,3 +1,8 @@
+"""
+For all the parameters I tried to tune in this fashion,
+it didn't actually work...
+"""
+
 import pandas as pd
 import numpy as np
 from scipy import optimize
@@ -10,7 +15,7 @@ from models.State import State
 START_IDX = 50
 PREDICTION_HORIZON = 20
 
-drive = pd.read_csv('data/easy-drive.csv').iloc[START_IDX:START_IDX+PREDICTION_HORIZON]
+drive = pd.read_csv('data/easy-drive-deltas.csv').iloc[START_IDX:START_IDX+PREDICTION_HORIZON]
 steers = drive['cmd_steer'].to_numpy()
 throttles = drive['cmd_throttle'].to_numpy()
 steps = np.arange(START_IDX, START_IDX+PREDICTION_HORIZON)  # Steps for x-axis in subplots
@@ -32,21 +37,23 @@ def _cost(sim_df, model_states):
                                      [s.y for s in model_states])))
     return np.linalg.norm(sim_points-model_points)
 
-def cost(coeffs):
+def cost(dt):
+    dt = dt[0]
     model = DynamicBicycleModel(initial_state)
-    Cf, Cr = coeffs[0], coeffs[1]
-    sim_states = []
-    for steer, throttle in zip(steers, throttles):
-        model.step(throttle, steer, dt=0.017, Cf=Cf, Cr=Cr)
+    # Cf, Cr = coeffs[0], coeffs[1]
+    sim_states = [initial_state]
+    for steer, throttle in zip(steers[:-1], throttles[:-1]):
+        model.step(throttle, steer, dt=dt)
         sim_states.append(model.state)
     return _cost(drive, sim_states)
 
-ret = optimize.shgo(
+ret = optimize.dual_annealing(
     cost,
     # [(10**4, 10**6), (10**4, 10**6)],
-    [(100_000, 300_000), (100_000, 300_000)],
-    options={'maxtime': 90000},
-    workers=10
+    [(0.001, 0.2)],
+    maxiter=10_000,
+    # options={'maxtime': 90000},
+    # workers=10
 )
 print(ret.x)
 print(ret.fun)
@@ -54,7 +61,7 @@ print(ret.message)
 
 sim_states = []
 for steer, throttle in zip(steers, throttles):
-    model.step(throttle, steer, dt=0.017, Cf=ret.x[0], Cr=ret.x[1])
+    model.step(throttle, steer, dt=ret.x)
     sim_states.append(model.state)
 
 

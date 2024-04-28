@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-df = pd.read_csv('data/with-dt.csv').iloc[1:, :]
+df = pd.read_csv('data/with-dt.csv')
+df = df[(df['dt'] >= 0.016) & (df['dt'] <= 0.28)]  # Remove outliers
 mean = np.mean(df['dt'])
 std = np.std(df['dt'])
-df = df[(df['dt'] >= (mean - 3 * std)) & (df['dt'] <= (mean + 3 * std))]
 
 print(f"mean: {mean}")
 print(f"std: {std}")
@@ -31,3 +31,4 @@ plt.xlabel('dt values')
 plt.ylabel('Frequency')
 plt.grid(True)
 plt.show()
+breakpoint()
