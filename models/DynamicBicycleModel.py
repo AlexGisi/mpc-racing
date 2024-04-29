@@ -43,6 +43,10 @@ class DynamicBicycleModel(Model):
         Fyf = Cf * (delta - theta_Vf)
         Fyr = Cr * (-theta_Vr)
 
+        # Use Pacejka tire model - don't know params, didn't work
+        # Fyf = -2*self.params.pac_Df*np.sin(self.params.pac_Cf*np.arctan(self.params.pac_Bf*-theta_Vf))
+        # Fyr = -2*self.params.pac_Dr*np.sin(self.params.pac_Cr*np.arctan(self.params.pac_Br*-theta_Vr))
+
         # Dynamics equations
         # See "Online Learning of MPC for Autonomous Racing" by Costa et al
         v_x_dot = ( (Fx - Fyf*np.sin(delta)) / m ) + (v_y * yaw_dot)
@@ -57,6 +61,10 @@ class DynamicBicycleModel(Model):
         v_y_new = v_y + v_y_dot * Ts
         yaw_dot_new = yaw_dot + yaw_dot_dot * Ts
 
+        # Wrap yaw to match simulator, I think? https://stackoverflow.com/a/29237626
+        yaw_new = np.arctan2(np.sin(yaw_new), np.cos(yaw_new))
+
+
         # Update the state
         self.state = State(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)
         info['Fx'] = Fx
@@ -64,6 +72,8 @@ class DynamicBicycleModel(Model):
         info['Fyr'] = Fyr
         info['delta'] = np.rad2deg(delta)
         info['Fx_info'] = Fx_info
+        info['theta_Vf'] = np.rad2deg(theta_Vf)
+        info['theta_Vr'] = np.rad2deg(theta_Vr)
 
         return self.state, info
 

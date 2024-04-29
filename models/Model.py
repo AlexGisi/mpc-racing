@@ -1,5 +1,6 @@
 from typing import Type
 import numpy as np
+import scipy.stats as stats
 from models.State import State
 from models.VehicleParameters import VehicleParameters
 
@@ -13,6 +14,12 @@ class Model:
     
     def Fx(self, throttle: float) -> float:
         """
+        TODO: model brake separately; see https://carla.readthedocs.io/en/latest/python_api/#carla.WheelPhysicsControl
+        max_brake_torque
+
+        TODO: doesn't account for damping, so the model reacts much faster
+        than the simulation
+
         steer: command in [-1, 1]
         """
         info = {}
@@ -22,10 +29,13 @@ class Model:
         else:
             regen_brake_force = 0
 
-        # The motor efficiency depends on the rpm, as described by the throttle curve
-        # in model3_data.py. 
-        eta = self.params.eta_motor
-        rpm = self.params.max_rpm * np.abs(throttle) * self.params.R
+        # The motor efficiency depends on the engine rpm, as described by the throttle curve.
+        # Estimate engine rpm from wheel rpm.
+        wheel_rpm = (self.state.v_x / self.params.C_wheel) * 60
+        rpm = wheel_rpm * self.params.R * 4.5
+
+        # Estimate rpm (https://github.com/carla-simulator/carla/issues/2989#issuecomment-653577020)
+        # rpm = self.params.max_rpm * np.abs(throttle) * self.params.R
         if rpm < 9000:
             eta = 1.0
         elif rpm < 9500:
@@ -34,11 +44,11 @@ class Model:
             eta = 0.81
         elif rpm < 12_500:
             eta = 0.71
-        elif rpm < 15_000:
-            eta = 0.675
         else:
-            eta = 0.6
-        
+            eta = 0.675
+
+        carla_penalty = stats.norm.pdf(throttle, loc=0.5, scale=0.0775) * self.params.m
+
         wheel_force = throttle*eta*self.params.T_max*self.params.R / self.params.r_wheel
         drag_force = 0.5*self.params.rho*self.params.C_d*self.params.A_f*(self.state.v_x**2)
         rolling_resistance = self.params.C_roll*self.params.m*self.params.g
@@ -49,8 +59,9 @@ class Model:
         info['regen_brake'] = regen_brake_force
         info['eta'] = eta
         info['rpm'] = rpm
+        info['carla_penalty'] = carla_penalty
 
-        return wheel_force - drag_force - rolling_resistance - regen_brake_force, info
+        return wheel_force - drag_force - rolling_resistance - regen_brake_force - carla_penalty, info
 
     def steer_cmd_to_angle(self, steer_cmd: float) -> float:
         """

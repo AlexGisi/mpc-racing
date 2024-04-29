@@ -10,9 +10,10 @@ class VehicleParameters:
     min_steer = -70.0  # Deg
 
     # For Fx
-    eta_motor = 0.9 # (technically it changes significantly with torque curve)
+    eta_motor = 0.9 # (default, changed in Fx() function)
     T_max = 743.0  # Max value on torque curve (N*m)
-    r_wheel = 0.37 # (m)
+    r_wheel = 0.37 # wheel radius (m)
+    C_wheel = 2*3.14*r_wheel  # wheel circumference
     R = 9.0  # transmission gear ratio
     rho = 1.225  # air density (at sea level)
     C_d = 0.23  # drag coefficient (via teslaoracle.com)
@@ -27,15 +28,18 @@ class VehicleParameters:
     lr: float = 2  # Center of mass to the rear axle (m) (trial and error)
     
     # Need to ID
-    Cf: float = 200_000  # Cornering stiffness coefficient, front tires (trial and error)
-    Cr: float = 200_000  # Cornering stiffness coefficient, rear tires (trial and error)
+    # Cf: float = 200_000  # Cornering stiffness coefficient, front tires (trial and error)
+    # Cr: float = 200_000  # Cornering stiffness coefficient, rear tires (trial and error)
+    Cf: float = 200_000
+    Cr: float = 200_000
 
-    # Don't need, would be nice but using linear tire model for now
-    # Bf: int = 15  # Pacejka tire model coefficient Bf, dimensionless
-    # Br: int = 15  # Pacejka tire model coefficient Br, dimensionless
-    # Cf: int = 1.4  # Pacejka tire model coefficient Cf, dimensionless 
-    # Df: int = 4524.86   # Pacejka tire model coefficient Df in Newtons  
-    # Dr: int = 4524.86   # Pacejka tire model coefficient Dr in Newtons 
+    # Pacejka tire model
+    pac_Bf: float = 10  # Pacejka tire model coefficient Bf, dimensionless
+    pac_Br: float = 10  # Pacejka tire model coefficient Br, dimensionless
+    pac_Cf: float = 138  # Pacejka tire model coefficient Cf, dimensionless 
+    pac_Cr: float = 138
+    pac_Df: float = 1500   # Pacejka tire model coefficient Df in Newtons  
+    pac_Dr: float = 1500   # Pacejka tire model coefficient Dr in Newtons 
 
     g: float = 9.81  # Acceleration due to gravity in meters per second squared
     Vblendmin: float = 10  # Minimum blending speed in meters per second

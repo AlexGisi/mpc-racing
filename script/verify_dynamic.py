@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from models.KinematicBicycleModel import KinematicBicycleModel
+from matplotlib.ticker import MultipleLocator
 from models.DynamicBicycleModel import DynamicBicycleModel
 from models.State import State
 
-START_IDX = 1400
+START_IDX = 300
 PREDICTION_HORIZON = 100
 PRED_EVERY = 1
 
@@ -47,17 +47,20 @@ def cost(sim_df, model_states):
     return np.linalg.norm(sim_points-model_points)
 
 costs = []
-# for i in range(1, PREDICTION_HORIZON+1):
-#     drive_df = drive.iloc[:i, :]
-#     states = sim_states[:i]
-#     costs.append(cost(drive_df, states))
+for i in range(1, PREDICTION_HORIZON+1, PRED_EVERY):
+    drive_df = drive.iloc[:i:PRED_EVERY, :]
+    states = sim_states[:i]
+    costs.append(cost(drive_df, states))
 
 left_df = pd.read_csv('lanes/left.csv')
 right_df = pd.read_csv('lanes/right.csv')
 
 fig, axs = plt.subplots(3, 5, figsize=(14, 10))
 
+
 # Plot trajectory
+axs[0, 0].plot(left_df['x'], left_df['y'], 'b')
+axs[0, 0].plot(right_df['x'], right_df['y'], 'b')
 axs[0, 0].plot([state.x for state in sim_states], 
                [state.y for state in sim_states], 
                'r:', label="Model")
@@ -66,6 +69,8 @@ axs[0, 0].legend(prop={'size': 6})
 axs[0, 0].set_title(f"{model.__repr__()} vs simulation result")
 axs[0, 0].set_xlabel('X Position')
 axs[0, 0].set_ylabel('Y Position')
+axs[0, 0].set_xlim(np.min([state.x for state in sim_states])-5, np.max([state.x for state in sim_states])+5)
+axs[0, 0].set_ylim(np.min([state.y for state in sim_states])-5, np.max([state.y for state in sim_states])+5)
 # axs[0, 0].set_aspect('equal')
 
 # Empty plot on the right of the trajectory for layout balance
@@ -83,6 +88,7 @@ axs[1, 0].set_title('Throttle Commands Over Time')
 axs[1, 0].set_xlabel('Step')
 axs[1, 0].set_ylabel('Throttle')
 axs[1, 0].grid(True)
+axs[1, 0].yaxis.set_major_locator(MultipleLocator(0.2))
 
 # Steering commands
 axs[1, 1].plot(steps, steers, 'c-', label='Steering')
@@ -119,7 +125,7 @@ axs[0, 2].plot(sim_steps[1:], [i['Fx'] / model.params.m for i in infos[1:]], 'r-
 axs[0, 2].plot(steps, drive['ax'], 'g--', label="Simulation")
 axs[0, 2].set_title("Longitudinal acceleration over time")
 axs[0, 2].set_xlabel("Step")
-axs[0, 2].legend()
+axs[0, 2].legend(prop={'size': 6})
 axs[0, 2].grid(True)
 
 axs[1, 2].plot(sim_steps[1:], [i['Fyf'] for i in infos[1:]], 'r-', label="Model")
@@ -149,24 +155,37 @@ axs[1, 3].set_xlabel("Step")
 axs[1, 3].set_ylabel("Efficiency")
 axs[1, 3].grid(True)
 
-axs[2, 3].plot(sim_steps[1:], [i['Fx_info']['rpm'] for i in infos[1:]])
-axs[2, 3].set_title("Estimated motor rpm over time")
+# axs[2, 3].plot(sim_steps[1:], [i['Fx_info']['rpm'] for i in infos[1:]])
+# axs[2, 3].set_title("Estimated motor rpm over time")
+# axs[2, 3].set_xlabel("Step")
+# axs[2, 3].set_ylabel("RPM")
+# axs[2, 3].grid(True)
+
+axs[2, 3].plot(sim_steps[1:], costs)
+axs[2, 3].set_title("Cumulative Costs over time")
 axs[2, 3].set_xlabel("Step")
-axs[2, 3].set_ylabel("RPM")
+axs[2, 3].set_ylabel("Cost")
 axs[2, 3].grid(True)
+axs[2, 3].yaxis.set_major_locator(MultipleLocator(2))
 
 axs[0, 4].plot(sim_steps[1:], [i['Fx_info']['wheel'] / model.params.m for i in infos[1:]])
 axs[0, 4].set_title("Longitudinal acceleration due to wheel force")
 axs[0, 4].grid(True)
 
-axs[1, 4].plot(sim_steps[1:], [-i['Fx_info']['drag'] / model.params.m for i in infos[1:]])
-axs[1, 4].set_title("Longitudinal acceleration due to drag force")
+axs[1, 4].plot(sim_steps[1:], [i['theta_Vf'] for i in infos[1:]], label="Front slip angle")
+axs[1, 4].plot(sim_steps[1:], [i['theta_Vr'] for i in infos[1:]], label="Rear slip angle")
+axs[1, 4].set_title("Slip angles over time (deg)")
 axs[1, 4].grid(True)
+axs[1, 4].legend(prop={'size': 5})
 
-axs[2, 4].plot(sim_steps[1:], [-i['Fx_info']['rolling_resistance'] / model.params.m for i in infos[1:]])
-axs[2, 4].set_title("Longitudinal acceleration due to rolling resistance")
+# axs[2, 4].plot(sim_steps[1:], [-i['Fx_info']['carla_penalty'] / model.params.m for i in infos[1:]])
+# axs[2, 4].set_title("Carla penalty on acceleration")
+# axs[2, 4].grid(True)
+
+axs[2, 4].scatter([np.deg2rad(i['theta_Vf']) for i in infos[1:]], drive['vy'][1:])
+axs[2, 4].set_xlabel("front slip angle")
+axs[2, 4].set_ylabel("sim v_y")
 axs[2, 4].grid(True)
 
-# plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.6, hspace=0.4)
 plt.tight_layout()
 plt.show()
