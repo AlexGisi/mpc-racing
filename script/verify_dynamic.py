@@ -37,7 +37,7 @@ infos = [{'Fx': float(drive.loc[0, 'ax']) / model.params.m,
           'Fyf': 0, 'Fyr': 0, 'delta': 0,
           'Fx_info': {'wheel': 0, 'drag': 0, 'rolling_resistance': 0}}]
 for steer, throttle in zip(steers[:-1:PRED_EVERY], throttles[:-1:PRED_EVERY]):
-    state, info = model.step(throttle, steer, dt=DELTA_T*PRED_EVERY, Cf=200_000, Cr=200_000)
+    state, info = model.step(throttle, steer, dt=DELTA_T*PRED_EVERY)
     sim_states.append(state)
     infos.append(info)
 
@@ -178,13 +178,8 @@ axs[1, 4].set_title("Slip angles over time (deg)")
 axs[1, 4].grid(True)
 axs[1, 4].legend(prop={'size': 5})
 
-# axs[2, 4].plot(sim_steps[1:], [-i['Fx_info']['carla_penalty'] / model.params.m for i in infos[1:]])
-# axs[2, 4].set_title("Carla penalty on acceleration")
-# axs[2, 4].grid(True)
-
-axs[2, 4].scatter([np.deg2rad(i['theta_Vf']) for i in infos[1:]], drive['vy'][1:])
-axs[2, 4].set_xlabel("front slip angle")
-axs[2, 4].set_ylabel("sim v_y")
+axs[2, 4].plot(sim_steps[1:], [-i['Fx_info']['carla_penalty'] / model.params.m for i in infos[1:]])
+axs[2, 4].set_title("Carla penalty on acceleration")
 axs[2, 4].grid(True)
 
 plt.tight_layout()

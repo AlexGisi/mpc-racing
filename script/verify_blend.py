@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
-from models.KinematicBicycleModel import KinematicBicycleModel
+from models.BlendedBicycleModel import BlendedBicycleModel
 from models.State import State
 
 START_IDX = 300
@@ -29,7 +29,7 @@ initial_state = State(
     v_y=drive.loc[0, 'vy'],
     yaw_dot=(drive.loc[1, 'yaw'] - drive.loc[0, 'yaw'])*DELTA_T
 )
-model = KinematicBicycleModel(initial_state)
+model = BlendedBicycleModel(initial_state)
 
 # Perform simulation.
 sim_states = [initial_state]
@@ -140,10 +140,10 @@ axs[0, 3].set_ylabel("Angle (deg)")
 axs[0, 3].grid(True)
 axs[0, 3].legend(prop={'size': 6})
 
-axs[1, 3].plot(sim_steps[1:], [i['Fx_info']['eta'] for i in infos[1:]])
-axs[1, 3].set_title("Motor efficiency over time")
+axs[1, 3].plot(sim_steps[1:], [i['lambda'] for i in infos[1:]])
+axs[1, 3].set_title("Lambda (emph on dyn)")
 axs[1, 3].set_xlabel("Step")
-axs[1, 3].set_ylabel("Efficiency")
+axs[1, 3].set_ylabel("\lambda")
 axs[1, 3].grid(True)
 
 # axs[2, 3].plot(sim_steps[1:], [i['Fx_info']['rpm'] for i in infos[1:]])

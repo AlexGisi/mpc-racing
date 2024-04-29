@@ -30,8 +30,8 @@ class VehicleParameters:
     # Need to ID
     # Cf: float = 200_000  # Cornering stiffness coefficient, front tires (trial and error)
     # Cr: float = 200_000  # Cornering stiffness coefficient, rear tires (trial and error)
-    Cf: float = 200_000
-    Cr: float = 200_000
+    Cf: float = 100_000
+    Cr: float = 100_000
 
     # Pacejka tire model
     pac_Bf: float = 10  # Pacejka tire model coefficient Bf, dimensionless
@@ -42,6 +42,6 @@ class VehicleParameters:
     pac_Dr: float = 1500   # Pacejka tire model coefficient Dr in Newtons 
 
     g: float = 9.81  # Acceleration due to gravity in meters per second squared
-    Vblendmin: float = 10  # Minimum blending speed in meters per second
-    Vblendmax: float = 40  # Maximum blending speed in meters per second
+    Vblendmin: float = 2  # Minimum blending speed in meters per second
+    Vblendmax: float = 15  # Maximum blending speed in meters per second
     Ts: int = 0.1  # Sampling time in seconds

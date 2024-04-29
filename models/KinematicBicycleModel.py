@@ -31,8 +31,11 @@ class KinematicBicycleModel(Model):
         yaw_new = yaw + ( (v_x / (lr + lf)) * np.tan(delta) ) * Ts
         v_x_new = v_x + (Fx / m) * Ts
 
-        yaw_dot_new = (v_x_new * (lr + lf)) * np.tan(delta)
-        v_y_new = yaw_dot_new * lr
+        yaw_dot_new = (v_x / (lr + lf)) * np.tan(delta)
+        v_y_new = yaw_dot * lr
+
+        # Wrap yaw to match simulator, I think? https://stackoverflow.com/a/29237626
+        yaw_new = np.arctan2(np.sin(yaw_new), np.cos(yaw_new))
 
         # Update the state
         self.state = State(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)

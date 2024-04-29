@@ -3,36 +3,59 @@ Haven't looked at this too closely yet.
 """
 from typing import Type
 import numpy as np
-from KinematicBicycleModel import KinematicBicycleModel
-from DynamicBicycleModel import DynamicBicycleModel
-from State import State
-from VehicleParameters import VehicleParameters
+from models.Model import Model
+from models.KinematicBicycleModel import KinematicBicycleModel
+from models.DynamicBicycleModel import DynamicBicycleModel
+from models.State import State
 
 
-class BlendedBicycleModel:
+class BlendedBicycleModel(Model):
     def __init__(self, initial_state: Type[State]):
         super().__init__(initial_state)
+        self.kinematic_model = None
+        self.dynamic_model = None
+        
+    def step(self, throttle_cmd: float, steer_cmd: float, dt=None):
+        self.kinematic_model = KinematicBicycleModel(initial_state=self.state)
+        self.dynamic_model = DynamicBicycleModel(initial_state=self.state)
 
-    def __init__(self, vblendmin, vblendmax, params):
-        self.vblendmin = vblendmin
-        self.vblendmax = vblendmax
-        self.kinematic_model = KinematicBicycleModel(params['lf'], params['lr'], params['Ts'])
-        self.dynamic_model = DynamicBicycleModel(params)
-    
-    def step(self, xk, uk, vk):
+        Ts = self.params.Ts if dt is None else dt
+        vel = np.hypot(self.state.v_x, self.state.v_y)
+
         # Calculate the blend factor based on the vehicle's velocity vk
-        λk = np.clip((vk - self.vblendmin) / (self.vblendmax - self.vblendmin), 0, 1)
+        lam = np.clip((vel - self.params.Vblendmin) / (self.params.Vblendmax - self.params.Vblendmin), 0, 1)
         
-        # Predict the next state using both kinematic and dynamic models
-        xk_next_kin = self.kinematic_model.predict_next_state(xk, uk)
-        xk_next_dyn = self.dynamic_model.predict_next_state(xk, uk)
+        # Forward prediction.
+        kin_pred, _ = self.kinematic_model.step(throttle_cmd, steer_cmd, dt=Ts)
+        dyn_pred, info = self.dynamic_model.step(throttle_cmd, steer_cmd, dt=Ts)
         
-        # Blend the next state predictions
-        xk_next = λk * xk_next_dyn + (1 - λk) * xk_next_kin
-        return xk_next
+        # Blend
+        kin = np.array([kin_pred.x,
+                        kin_pred.y,
+                        kin_pred.yaw,
+                        kin_pred.v_x,
+                        kin_pred.v_y,
+                        kin_pred.yaw_dot])
+        dyn = np.array([dyn_pred.x,
+                        dyn_pred.y,
+                        dyn_pred.yaw,
+                        dyn_pred.v_x,
+                        dyn_pred.v_y,
+                        dyn_pred.yaw_dot])
+        
+        blend = lam * dyn + (1 - lam) * kin
 
+        self.state = State(
+            x=blend[0],
+            y=blend[1],
+            yaw=blend[2],
+            v_x=blend[3],
+            v_y=blend[4],
+            yaw_dot=blend[5]
+        )
 
-# Example usage:
-# Initialize the blended bicycle model
-blended_bicycle_model = BlendedBicycleModel(vblendmin=2, vblendmax=5, params=vehicle_params)
-
+        info['lambda'] = lam
+        return self.state, info
+    
+    def __repr__(self) -> str:
+        return "BlendedBicycleModel"
