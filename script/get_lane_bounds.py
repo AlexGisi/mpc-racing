@@ -29,11 +29,12 @@ right_df = right_df_temp.rename(columns={
     'next_right_lane_point_y': 'y'
 }).drop_duplicates()
 
-plt.plot(left_df['x'], left_df['y'], label='left lane')
-plt.plot(right_df['x'], right_df['y'], label='right lane')
+plt.plot(left_df['x'], left_df['y'], 'o', label='left lane')
+plt.plot(right_df['x'], right_df['y'], 'o', label='right lane')
 plt.plot([x for (x, y) in cl.waypoints], [y for (x, y) in cl.waypoints], 'g--')
 plt.legend()
 plt.show()
 
-right_df.to_csv("lanes/right.csv", index=False)
-left_df.to_csv("lanes/left.csv", index=False)
+# Save them
+# right_df.to_csv("lanes/right.csv", index=False)
+# left_df.to_csv("lanes/left.csv", index=False)

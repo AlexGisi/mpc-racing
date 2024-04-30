@@ -1,104 +1,77 @@
-from typing import List
+from typing import List, Type
+import pandas as pd
 import pickle
 from matplotlib import pyplot as plt
-from scipy.optimize import minimize_scalar, dual_annealing
-from scipy.interpolate import make_interp_spline
-from math import sqrt, floor
+from math import floor
 import numpy as np
 from numpy.linalg import norm
+from splines.ParameterizedLine import ParameterizedLine
+from splines.ParameterizedLane import ParameterizedLane
 from splines.util import euclidean, midpoint
 
-class ParameterizedCenterline:
+class ParameterizedCenterline(ParameterizedLine):
     def __init__(self):
-        self.spline_x = None
-        self.spline_y = None
-        self.length = None
-        self.waypoints = None
-        
-    def Gx(self, s):
-        s = s % self.length
-        return self.spline_x(s)
+        super().__init__()
+
+        self.right_lane = ParameterizedLane()
+        self.right_lane.from_file("lanes/shanghai_intl_circuit_left.csv")
+
+        self.left_lane = ParameterizedLane()
+        self.left_lane.from_file("lanes/shanghai_intl_circuit_right.csv")
+
+        self.lane_error_table = pd.read_csv("lanes/shanghai_intl_circuit_max_error.csv",
+                                            index_col='ss')
     
-    def Gy(self, s):
-        s = s % self.length
-        return self.spline_y(s)
-    
-    def dGx(self, s):
-        s = s % self.length
-        return self.spline_x.derivative()(s)
-    
-    def dGy(self, s):
-        s = s % self.length
-        return self.spline_y.derivative()(s)
-    
-    def ddGx(self, s):
-        s = s % self.length
-        return self.spline_x.derivative().derivative()(s)
-    
-    def ddGy(self, s):
-        s = s % self.length
-        return self.spline_y.derivative().derivative()(s)
-    
-    def x_as_coeffs(self, s, lookahead) -> List[float]:
+    def e_as_coeffs(self, s, lookahead):
         """
-        s: current progress
-        lookahead: how far ahead should I get points for interpolation
+        Too slow for MPC, lookup table used instead.
+
+        Get the minimum over the centerlines of the maximum drivable track error.
+        Hopefully track symmetric enough over the centerline. 
         """
-        interps = np.arange(0, lookahead, 2) + s
-        interpx = np.array([self.Gx(s) for s in interps])
-        coeffs = np.polyfit(interps, interpx, deg=10)
+        right_errors, ss = self.get_errors(self.right_lane, s, lookahead)
+        left_errors, ss = self.get_errors(self.left_lane, s, lookahead)
+        errors = [min(l, r) for l, r in zip(right_errors, left_errors)]
+        coeffs = np.polyfit(ss, errors, deg=3)
         return list(coeffs)
 
-    def y_as_coeffs(self, s, lookahead) -> List[float]:
+    def get_errors(self, lane: Type[ParameterizedLane], s, lookahead: float, step=0.5):
         """
-        s: current progress
-        lookahead: how far ahead should I get points for interpolation
+        Too slow for MPC, lookup table used instead.
         """
-        interps = np.arange(0, lookahead, 6) + s
-        interpy = np.array([self.Gy(s) for s in interps])
-        coeffs = np.polyfit(interps, interpy, deg=10)
-        return list(coeffs)
-
-    def projection(self, X, Y, bounds=None):
-        """
-        Interface which wraps both projection functions and chooses the
-        right one, depending on the bounds situation.
-
-        X: float
-        Y: float
-        bounds: 2-dim Tuple
-        """
-        if bounds is None or 5 < abs(bounds[1] - bounds[0]):
-            return self.projection_global(X, Y)
+        errors = []
+        if lookahead > 0:
+            ss = np.arange(s, s+lookahead, step)
+        elif lookahead == 0:
+            ss = [s]
         else:
-            return self.projection_local(X, Y, bounds=bounds)
-
-    def projection_local(self, X, Y, bounds=None):
-        """
-        Get the progress along the track when the car is at (X, Y) and
-        the distance of (X, Y) from the centerline (absolute centerline error).
+            raise ValueError()
         
-        Must use reasonable bounds (true projection +- 5m is a good
-        reference) because the distance is nonconvex wrt s.
+        for s in ss:
+            _, dist = lane.projection(self.Gx(s), self.Gy(s), bounds=lane.progress_bounds(step=step))
+            errors.append(dist)
+        lane.last_progress = None
 
-        Takes ~0.0002s.
-        """
-        if bounds is None:
-            bounds = (0, self.length)
-        if bounds[1] - bounds[0] > 10:
-            print("Warning: local projection over with large bounds", bounds)
-
-        dist = lambda s: sqrt((self.Gx(s) - X)**2 + (self.Gy(s) - Y)**2)
-        ret = minimize_scalar(dist, bounds=bounds)
-        return ret.x, dist(ret.x)
+        return errors, ss
     
-    def projection_global(self, X, Y):
+    def lookup_error(self, s, lookahead):
         """
-        Takes ~0.065s.
+        Use the lookup table to find the smallest error in the prediction horizon.
         """
-        dist = lambda s: sqrt((self.Gx(s) - X)**2 + (self.Gy(s) - Y)**2)
-        ret = dual_annealing(dist, bounds=[(0, self.length)])
-        return ret.x[0], dist(ret.x)
+        s_round = round(s * 2) / 2
+        lookahead_round = round(lookahead * 2) / 2
+        ss = np.arange(s_round, s+lookahead_round, 0.5)
+        left_min = 10000
+        right_min = 10000
+        for s in ss:
+            s = s % self.length
+            r = self.lane_error_table.loc[s]
+            if r['left'] < left_min:
+                left_min = r['left']
+            if r['right'] < right_min:
+                right_min = r['right']
+
+        return min(right_min, left_min)
 
     def error_sign(self, X, Y, s):
         """
@@ -110,49 +83,6 @@ class ParameterizedCenterline:
         centerline_displacement = np.array([X - self.Gx(s), Y - self.Gy(s)])
 
         return 1 if norm(centerline_displacement - upn) < norm(centerline_displacement + upn) else -1
-    
-    def unit_tangent(self, s):
-        dr = np.array([self.dGx(s), self.dGy(s)])
-        ut = dr / np.linalg.norm(dr)
-        return ut
-    
-    def curvature(self, s):
-        dx = self.dGx(s)
-        dy = self.dGy(s)
-
-        ddx = self.ddGx(s)
-        ddy = self.ddGy(s)
-
-        kappa = np.abs(dx * ddy - dy * ddx)
-        return kappa
-
-    def unit_principal_normal(self, s):
-        """
-        Return the unit vector orthogonal to the curve at s which forms
-        a right-hand coordinate system with the tangent vector.
-
-        Using the defition, the unit principal normal vector is
-        found with
-
-        ddr = np.array([self.ddGx(s), self.ddGy(s)])
-        upn = ddr / np.linalg.norm(ddr)
-
-        There seems to be some numerical issue with this due to higher
-        order derivatives in interpolation, very notable on horizontal 
-        (across the x-axis) lines. The unit_tangent function seems
-        to be well-conditioned, so we simply use it and compute the
-        associated tangent.
-        """
-        ut_x, ut_y = self.unit_tangent(s)
-        return ut_y, -ut_x
-    
-    def unit_principal_normal1(self, s):
-        """
-        Do not use! Use unit_principal_normal.
-        """
-        ddr = np.array([self.ddGx(s), self.ddGy(s)])
-        upn = ddr / np.linalg.norm(ddr)
-        return upn[0], upn[1]
 
     def from_file(self, fp):
         with open(fp, 'rb') as f:
@@ -166,22 +96,7 @@ class ParameterizedCenterline:
                 midpoint(waypoints[-1], waypoints[0], alpha=0.9)
             )
 
-        ss = [0]  # Centerline distances corresponding to each waypoint.
-        cum_dist = 0
-        for i, waypoint in enumerate(waypoints[:-1]):
-            current = waypoints[i]
-            next = waypoints[i+1]
-            cum_dist += euclidean(current, next)
-            ss.append(cum_dist)
-
-        s = np.array(ss)
-        x = np.array([p[0] for p in waypoints])
-        y = np.array([p[1] for p in waypoints])
-
-        self.spline_x = make_interp_spline(s, x)
-        self.spline_y = make_interp_spline(s, y)
-        self.length = ss[-1]
-        self.waypoints = list(zip(x, y))
+        self.from_waypoints(waypoints)
     
     def plot(self,
              d=False, 
@@ -191,7 +106,8 @@ class ParameterizedCenterline:
              points=None,
              pointsize=10,
              labels=None, 
-             waypoints=False):
+             waypoints=False,
+             lanes=True):
         subplot_n = 1 + d + dd
         fig = plt.figure()
 
@@ -199,6 +115,10 @@ class ParameterizedCenterline:
         plotx, ploty = self._get_plotxy(self.Gx, self.Gy, between=between)
         ax1.set_title("Waypoints")
         ax1.plot(plotx, ploty, 'r-')
+
+        if lanes:
+            ax1.plot([x for x,y in self.left_lane.waypoints], [y for x,y in self.left_lane.waypoints], 'b')
+            ax1.plot([x for x,y in self.right_lane.waypoints], [y for x,y in self.right_lane.waypoints], 'b')
 
         if waypoints:
             x = [p[0] for p in self.waypoints]

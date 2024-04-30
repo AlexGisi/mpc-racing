@@ -3,8 +3,7 @@ import casadi as ca
 from models.State import State
 from splines.ParameterizedCenterline import ParameterizedCenterline
 from control.ControllerParameters import FixedControllerParameters, RuntimeControllerParameters
-from control.util import make_poly,
-
+from control.util import make_poly
 
 
 class MPC:
@@ -13,7 +12,7 @@ class MPC:
                  s: float, 
                  centerline_x_poly_coeffs: List[float],
                  centerline_y_poly_coeffs: List[float],
-                 error_poly_coeffs: List[float], 
+                 max_error: float,
                  runtime_params: Type[RuntimeControllerParameters]) -> None:
         """
         state: initial vehicle state
