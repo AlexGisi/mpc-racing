@@ -34,6 +34,15 @@ class TrackSegments:
         assert(i < self.n_cp)
         return self.bounds[i]
     
+    def get_seg_num(self, X, Y):
+        dist = line.projection(X, Y)[0]
+        seg_num = 0
+        while seg_num < self.n_cp:
+            if dist >= self.get_bound(seg_num):
+                break
+            seg_num += 1
+        return seg_num
+    
     def plot(self, line):
         subplot_n = 1
         fig = plt.figure()
