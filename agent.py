@@ -97,7 +97,7 @@ class Agent():
 
         return self.target_vel, self.kappa
 
-    def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary):
+    def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary, simulation_time):
         """
         Execute one step of navigation. Times out in 10s.
 
