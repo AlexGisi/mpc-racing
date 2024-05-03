@@ -8,6 +8,11 @@ class VehicleParameters:
     m: float = 1845.0  # Vehicle mass in kilograms
     max_steer = 70.0  # Deg
     min_steer = -70.0  # Deg
+    max_accel = 15.
+    min_accel = -15.
+    max_steer_delta = 20.
+    max_accel_delta = 5  # kind of randomly chosen, used in mpc.py
+    max_vel = 33  # (m/s)
 
     # For Fx
     eta_motor = 0.9 # (default, changed in Fx() function)
@@ -44,4 +49,4 @@ class VehicleParameters:
     g: float = 9.81  # Acceleration due to gravity in meters per second squared
     Vblendmin: float = 2  # Minimum blending speed in meters per second
     Vblendmax: float = 15  # Maximum blending speed in meters per second
-    Ts: int = 0.1  # Sampling time in seconds
+    Ts: int = 0.05  # Sampling time in seconds

@@ -106,6 +106,10 @@ class ParameterizedLine:
         ut = dr / np.linalg.norm(dr)
         return ut
     
+    def unit_tangent_yaw(self, s):
+        ut = self.unit_tangent(s)
+        return np.arctan2(ut[1], ut[0])
+    
     def curvature(self, s):
         dx = self.dGx(s)
         dy = self.dGy(s)

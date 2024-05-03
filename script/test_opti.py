@@ -2,23 +2,36 @@ import casadi as ca
 
 opti = ca.Opti()
 
+class Model:
+    def __init__(self) -> None:
+        self.coeffs = [0.2, 1, 0.4, 1]
+        
+    def fx(self, t):
+        t = self.gain(t)
+        def make_poly(var, cs):
+            f = 0
+            for i, c in enumerate(reversed(cs)):
+                f += c* var**i
+            return f
+        return make_poly(t, self.coeffs)
+    
+    def gain(self, tz):
+        return tz*5
+
 x = opti.variable()
 y = opti.variable()
 
-coeffs = [0.2, 1, 0.4, 1]
-coeffs2 = [1, 0.6, 1]
-def make_poly(var, cs):
-    f = 0
-    for i, c in enumerate(reversed(cs)):
-        f += c* var**i
-    return f
+model = Model()
+
+z = ca.SX.sym('z', 6, 2)
+z[0, 0] = 234
+breakpoint()
 
 s = ca.SX.sym('s')
-F = ca.Function('F', [s], [make_poly(s, coeffs)])
-F2 = ca.Function('F', [s], [make_poly(s, coeffs2)])
+expr = model.fx(s)
+F = ca.Function('F', [s], [expr])
 f = F(x)
-f1 = F2(x)
-opti.minimize(  ca.gradient(f, x) + f1   )
+opti.minimize(  f   )
 
 opti.solver('ipopt')
 

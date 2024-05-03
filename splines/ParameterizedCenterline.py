@@ -10,24 +10,25 @@ from splines.ParameterizedLane import ParameterizedLane
 from splines.util import euclidean, midpoint
 
 class ParameterizedCenterline(ParameterizedLine):
-    def __init__(self):
+    def __init__(self, track: str = "shanghai_intl_circuit"):
         super().__init__()
 
         self.right_lane = ParameterizedLane()
-        self.right_lane.from_file("lanes/shanghai_intl_circuit_left.csv")
+        self.right_lane.from_file(f"lanes/{track}_left.csv")
 
         self.left_lane = ParameterizedLane()
-        self.left_lane.from_file("lanes/shanghai_intl_circuit_right.csv")
+        self.left_lane.from_file(f"lanes/{track}_right.csv")
 
-        self.lane_error_table = pd.read_csv("lanes/shanghai_intl_circuit_max_error.csv",
+        self.lane_error_table = pd.read_csv(f"lanes/{track}_max_error.csv",
                                             index_col='ss')
+        self.from_file(f"waypoints/{track}")
     
     def e_as_coeffs(self, s, lookahead):
         """
         Too slow for MPC, lookup table used instead.
 
         Get the minimum over the centerlines of the maximum drivable track error.
-        Hopefully track symmetric enough over the centerline. 
+        The track is symmetric enough over the centerline. 
         """
         right_errors, ss = self.get_errors(self.right_lane, s, lookahead)
         left_errors, ss = self.get_errors(self.left_lane, s, lookahead)

@@ -68,7 +68,7 @@ class Model:
         Maps a steer command in [-1, 1] to the angle of the wheels
         over the next timestep.
         """
-        vel = np.hypot(self.state.v_x, self.state.v_y) * 3.6  # Convert to km/h
+        vel = np.sqrt(self.state.v_x**2 + self.state.v_y**2) * 3.6  # Convert to km/h
         if vel < 20.0:
             gain = 1.0
         elif vel < 60.0:
