@@ -2,7 +2,7 @@ import scipy.integrate as integrate
 import scipy.optimize as optimize
 import math
 from matplotlib import pyplot as plt
-import ParameterizedCenterline
+from splines.ParameterizedCenterline import ParameterizedCenterline
 
 class TrackSegments:
     def __init__(self, centerline, n_cp, v_max, d_f, d_r, m):
@@ -55,7 +55,7 @@ class TrackSegments:
         plt.show()
     
 if __name__ == '__main__':
-    line = ParameterizedCenterline.ParameterizedCenterline()
+    line = ParameterizedCenterline()
     line.from_file("./waypoints/shanghai_intl_circuit")
 
     n_cp = 10
