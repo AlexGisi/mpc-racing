@@ -59,13 +59,15 @@ class ParameterizedCenterline(ParameterizedLine):
         """
         Use the lookup table to find the smallest error in the prediction horizon.
         """
-        s_round = round(s * 2) / 2
-        lookahead_round = round(lookahead * 2) / 2
+        def round_to_half(x):
+            return round(x*2) / 2
+        s_round = round_to_half(s)
+        lookahead_round = round_to_half(lookahead)
         ss = np.arange(s_round, s+lookahead_round, 0.5)
         left_min = 10000
         right_min = 10000
         for s in ss:
-            s = s % self.length
+            s = round_to_half(s % self.length)
             r = self.lane_error_table.loc[s]
             if r['left'] < left_min:
                 left_min = r['left']

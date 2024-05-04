@@ -19,9 +19,9 @@ class FixedControllerParameters:
     e_hat_CL_max: float = 1
     
     Ts: float = 0.05  # (s) todo: adjust this
-    N: int = 40  # Prediction horizon
+    N: int = 50  # Prediction horizon
     lookahead_distance: float = N*Ts*v_max # (m)  how far the centerline/error polynomials are computed for
-
+    max_iter: int = 500
 
 @dataclass
 class RuntimeControllerParameters:
