@@ -40,24 +40,27 @@ class ParameterizedLine:
         s = s % self.length
         return self.spline_y.derivative().derivative()(s)
     
-    def x_as_coeffs(self, s, lookahead) -> List[float]:
+    def x_as_coeffs(self, s, lookahead, deg=4) -> List[float]:
         """
         s: current progress
         lookahead: how far ahead should I get points for interpolation
+        deg: degree of interpolating polynomial, please don't make this too high
+        for the sake of calculations which rely on the derivative to e.g.
+        approximate projections
         """
-        interps = np.arange(0, lookahead, 2) + s
+        interps = np.linspace(0, lookahead, 50) + s
         interpx = np.array([self.Gx(s) for s in interps])
-        coeffs = np.polyfit(interps, interpx, deg=10)
+        coeffs = np.polyfit(interps, interpx, deg=deg)
         return list(coeffs)
 
-    def y_as_coeffs(self, s, lookahead) -> List[float]:
+    def y_as_coeffs(self, s, lookahead, deg=4) -> List[float]:
         """
         s: current progress
         lookahead: how far ahead should I get points for interpolation
         """
-        interps = np.arange(0, lookahead, 6) + s
+        interps = np.linspace(0, lookahead, 50) + s
         interpy = np.array([self.Gy(s) for s in interps])
-        coeffs = np.polyfit(interps, interpy, deg=10)
+        coeffs = np.polyfit(interps, interpy, deg=deg)
         return list(coeffs)
     
     def projection(self, X, Y, bounds=None):

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 class FixedControllerParameters:
     # Fixed MPC parameters (Costa p8).
     lambda_s: float = 200  # Weight of track progress at prediction horizon
-    alpha_L: float = 1000 # Weight on lag approximation
+    alpha_L: float = 2000 # Weight on lag approximation
     q_v_max: float = 5
     v_max: float = 30
     Delta_d_max: float = 0.2

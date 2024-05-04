@@ -20,7 +20,6 @@ class MPC:
         state: initial vehicle state
         s: initial vehicle progress
         centerline_{x,y}_poly_coeffs: coefficients of centerline polynomial (over ControllerParameters.lookahead_distance)
-        error_poly_coeffs: coefficients of min allowable error (over ControllerParameters.lookahead_distance)
         params: runtime parameters for this instantiation of the problem
         sol0: last solution returned by opti.solve(), optional
         """
@@ -113,8 +112,9 @@ class MPC:
 
             opti.subject_to(States[:, i] == f_vehicle(States[:, i-1], U[:, i-1]))
             opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )
-            opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))
-
+            opti.subject_to( opti.bounded(-max_error-10, e_hat_C(S_hat[i], States[:, i]), max_error+10))
+            # TODO EXAMINE MAX ERROR BOUNDS
+            
         for i in range(0, N):
             opti.subject_to(U[0, i] < max_throttle)
             opti.subject_to(U[0, i] > min_throttle)
