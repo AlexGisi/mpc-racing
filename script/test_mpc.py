@@ -14,27 +14,30 @@ cl = ParameterizedCenterline(track="shanghai_intl_circuit")
 s0 = 50
 ss = np.arange(s0, cl.length, 0.5)
 sol = None
+dual = None
 
 x, y = cl.Gx(s0), cl.Gy(s0)
 yaw = cl.unit_tangent_yaw(s0)
 v_x, v_y, r = 25, 0, 0
 state0 = State(x=x, y=y, yaw=yaw, v_x=v_x, v_y=v_y, yaw_dot=r)
+
 while True:
-    dynamic_lookahead = FixedControllerParameters.Ts * (state0.v_x + 15) * FixedControllerParameters.N
+    dynamic_lookahead = FixedControllerParameters.Ts * (state0.v_x + (15/40)*FixedControllerParameters.N) * FixedControllerParameters.N
     cl_x_coeffs = cl.x_as_coeffs(s0, dynamic_lookahead, deg=POLY_DEG)
-    cl_y_coeffs = cl.y_as_coeffs(s0, dynamic_lookahead, deg=POLY_DEG)
+    cl_y_coeffs = cl.y_as_coeffs(s0-5, dynamic_lookahead, deg=POLY_DEG)
     max_err = cl.lookup_error(s0, dynamic_lookahead)
-    
+        
     states = [state0]
     mpc = MPC(state=state0,
               sol0=None,
+              duals=None,
               s0=s0,
               centerline_x_poly_coeffs=cl_x_coeffs,
               centerline_y_poly_coeffs=cl_y_coeffs,
               max_error=max_err,
               runtime_params=RuntimeControllerParameters())
 
-    sol, ret = mpc.solution()
+    sol, ret, dual = mpc.solution()
     States, U, S_hat, e_hat_c, e_hat_l = ret[0], ret[1], ret[2], ret[3], ret[4]
     states.extend([State(x=t[0], y=t[1], yaw=t[2], v_x=t[3], v_y=t[4], yaw_dot=t[5]) for t in zip(States[0, :], States[1, :], States[2, :], States[3, :], States[4, :], States[5, :])])
 
@@ -57,7 +60,7 @@ while True:
 
     cl_x = lambda s: make_poly(s, cl_x_coeffs)
     cl_y = lambda s: make_poly(s, cl_y_coeffs)
-    ss = np.linspace(s0, s0+dynamic_lookahead, 25)
+    ss = np.linspace(s0-5, s0+dynamic_lookahead, 25)
     ax1.plot([cl_x(s) for s in ss], [cl_y(s) for s in ss], linewidth=2, label="Polynomial centerline")
 
     ax1.plot([x for x, y in cl.left_lane.waypoints], [y for x, y in cl.left_lane.waypoints], 'r')
@@ -91,10 +94,12 @@ while True:
     ax3.legend()
     ax3.grid(True)
 
-    ax4.plot(range(len(S_hat)), S_hat)
+    ax4.plot(range(len(S_hat)), S_hat, label="$\hat{s}$")
+    ax4.plot(range(len(states)), [cl.projection_local(s.x, s.y, bounds=(s0-10, s0+100), warn=False)[0] for s in states], label="s")
     ax4.set_xlabel("Step")
     ax4.grid(True)
-    ax4.set_title(r"Estimated centerline progress $\hat{s}$")
+    ax4.legend()
+    ax4.set_title(r"Estimated and actual centerline progress")
 
     ax6.plot(range(len(e_hat_l)), e_hat_l, label=r"$\hat{e}_l$")
     ax6.plot(range(len(e_hat_c)), e_hat_c, label=r"$\hat{e}_c$")
@@ -106,7 +111,9 @@ while True:
     plt.tight_layout()
     plt.show()
 
-    state0 = states[1]
-    s0=s0+15
-    state0.x, state0.y = cl.Gx(s0), cl.Gy(s0)
+    s0=s0 + 15
+
+    # Perturb the car position from the centerline
+    upr = np.array(cl.unit_principal_normal(s0)) * np.random.uniform(-5, 5)
+    state0.x, state0.y = cl.Gx(s0)+upr[0], cl.Gy(s0)+upr[1]
     state0.yaw = cl.unit_tangent_yaw(s0)

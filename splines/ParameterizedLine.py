@@ -77,7 +77,7 @@ class ParameterizedLine:
         else:
             return self.projection_local(X, Y, bounds=bounds)
 
-    def projection_local(self, X, Y, bounds=None):
+    def projection_local(self, X, Y, bounds=None, warn=True):
         """
         Get the progress along the track when the car is at (X, Y) and
         the distance of (X, Y) from the centerline (absolute centerline error).
@@ -89,7 +89,7 @@ class ParameterizedLine:
         """
         if bounds is None:
             bounds = (0, self.length)
-        if bounds[1] - bounds[0] > 10:
+        if warn is True and (bounds[1] - bounds[0]) > 10:
             print("Warning: local projection over with large bounds", bounds)
 
         dist = lambda s: sqrt((self.Gx(s) - X)**2 + (self.Gy(s) - Y)**2)

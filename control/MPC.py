@@ -14,7 +14,8 @@ class MPC:
                  centerline_y_poly_coeffs: List[float],
                  max_error: float,
                  runtime_params: Type[RuntimeControllerParameters],
-                 sol0: None  # return of previous iteration
+                 sol0: None,  # return of previous iteration
+                 duals: None,  # dual vars of previous
                  ) -> None:
         """
         state: initial vehicle state
@@ -43,7 +44,7 @@ class MPC:
         min_steer = -1.0
         max_steer = 1.0
         min_throttle = -1.0
-        max_throttle = 1.0
+        max_throttle = RuntimeControllerParameters.d_max
         max_steer_delta = 0.1
         max_throttle_delta = 0.2
         min_s_delta = 0.1
@@ -69,22 +70,22 @@ class MPC:
 
         e_hat_C = ca.Function('e_hat_C', [s, X], [dGy(s)*(X[0] - Gx(s)) - dGx(s)*(X[1] - Gy(s))])
         e_hat_L = ca.Function('e_hat_L', [s, X], [-dGx(s)*(X[0] - Gx(s)) - dGy(s)*(X[1] - Gy(s))])
-        S = ca.Function('S', [s, X], [e_hat_C(s, X)**2 + e_hat_L(s, X)**2])
+        e_tot = ca.Function('t_tot', [s, X], [e_hat_C(s, X)**2 + e_hat_L(s, X)**2])
 
         f_vehicle = ca.Function('f_vehicle', [X, u], [self.f_vehicle(X, u)])
         
         # Cost function (terminal costs).
-        J = -lambda_s*S(S_hat[N], States[:, N])
-        J += q_v_y * States[4, N]**2 
-        J += alpha_c*e_hat_C(S_hat[0, N], States[:, N])**n 
-        J += alpha_L*e_hat_L(S_hat[0, N], States[:, N]) 
+        J = -lambda_s*S_hat[N]
+        J += q_v_y*States[4, N]**2 
+        J += alpha_c*e_hat_C(S_hat[N], States[:, N])**n 
+        J += alpha_L*e_hat_L(S_hat[N], States[:, N]) 
         J += ca.exp(q_v_max * (States[3, N] - v_max))
 
         # Cost function (stage costs). 
         for i in range(1, N):
-            J += q_v_y*S(S_hat[i], States[:, i])**2
+            J += q_v_y*States[4, i]**2
             J += alpha_c*e_hat_C(S_hat[i], States[:, i])**n
-            J += alpha_L*e_hat_L(S_hat[i], States[:, i])
+            J += alpha_L*e_hat_L(S_hat[i], States[:, i])**2
             J += beta_delta*(U[1, i]-U[1, i-1])**2
             J += ca.exp(q_v_max*(States[3, i] - v_max))
 
@@ -101,18 +102,17 @@ class MPC:
         state_direction = ca.vertcat([ca.cos(state.yaw), ca.sin(state.yaw)])
         state_direction = state_direction / ca.sqrt(state_direction[0]**2 + state_direction[1]**2)
         for i in range(1, N+1):
-            if sol0 is None:
-                opti.set_initial(S_hat[i], s0 + i*VehicleParameters.Ts*VehicleParameters.max_vel)
-                opti.set_initial(States[0, i], state.x + state_direction[0]*i*VehicleParameters.Ts * (VehicleParameters.max_vel / 5))
-                opti.set_initial(States[1, i], state.y + state_direction[1]*i*VehicleParameters.Ts * (VehicleParameters.max_vel / 5))
-                opti.set_initial(States[2, i], state.yaw)
-                opti.set_initial(States[3, i], state.v_x)
-                opti.set_initial(States[4, i], state.v_y)
-                opti.set_initial(States[5, i], state.yaw_dot)
+            opti.set_initial(S_hat[i], s0 + i*VehicleParameters.Ts*VehicleParameters.max_vel)
+            opti.set_initial(States[0, i], state.x + state_direction[0]*i*VehicleParameters.Ts * (VehicleParameters.max_vel / 5))
+            opti.set_initial(States[1, i], state.y + state_direction[1]*i*VehicleParameters.Ts * (VehicleParameters.max_vel / 5))
+            opti.set_initial(States[2, i], state.yaw)
+            opti.set_initial(States[3, i], state.v_x)
+            opti.set_initial(States[4, i], state.v_y)
+            opti.set_initial(States[5, i], state.yaw_dot)
 
             opti.subject_to(States[:, i] == f_vehicle(States[:, i-1], U[:, i-1]))
             opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )
-            opti.subject_to( opti.bounded(-max_error-10, e_hat_C(S_hat[i], States[:, i]), max_error+10))
+            opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))
             # TODO EXAMINE MAX ERROR BOUNDS
             
         for i in range(0, N):
@@ -120,11 +120,8 @@ class MPC:
             opti.subject_to(U[0, i] > min_throttle)
             opti.subject_to(U[1, i] < max_steer)
             opti.subject_to(U[1, i] > min_steer)
-            opti.subject_to( opti.bounded(-max_throttle, U[0, i] - U[0, i-1], max_throttle_delta))
+            opti.subject_to( opti.bounded(-1, U[0, i] - U[0, i-1], max_throttle_delta))
             opti.subject_to( opti.bounded(-max_steer_delta, U[1, i] - U[1, i-1], max_steer_delta))
-        
-        if sol0:  # TODO: dual variables
-            opti.set_initial(sol0.value_variables())
 
         # Should be set regardless of sol0.
         opti.set_initial(S_hat[0], s0)
@@ -139,8 +136,9 @@ class MPC:
         opti.solver('ipopt', {
             'ipopt': {
                 'max_iter': FixedControllerParameters.max_iter,  # Maximum number of iterations
-                'print_level': 5,  # Adjust to control the verbosity of IPOPT output
-                'tol': 1e-4  # Solver tolerance
+                'print_level': 4,  # Adjust to control the verbosity of IPOPT output
+                'tol': 1e-4,  # Solver tolerance
+                'warm_start_init_point': 'yes',
             }
         })
 
@@ -152,6 +150,7 @@ class MPC:
                         self.sol.value(S_hat), 
                         [self.sol.value(e_hat_C(S_hat[i], States[:, i])) for i in range(0, N)], 
                         [self.sol.value(e_hat_L(S_hat[i], States[:, i])) for i in range(N)])
+            self.dual = self.sol.value(opti.lam_g)
         except RuntimeError as e:  # found infeasible solution or exceeded iterations or ...
             print(e)
             self.ret = (opti.debug.value(States), 
@@ -160,9 +159,10 @@ class MPC:
                         [opti.debug.value(e_hat_C(S_hat[i], States[:, i])) for i in range(N)], 
                         [opti.debug.value(e_hat_L(S_hat[i], States[:, i])) for i in range(N)])
             self.sol = None
+            self.dual = None
     
     def solution(self):
-        return self.sol, self.ret
+        return self.sol, self.ret, self.dual
 
     def f_vehicle(self, x_k, u_k):
         """
