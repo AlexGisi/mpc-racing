@@ -8,14 +8,16 @@ from control.util import make_poly, deg2rad, normal_pdf
 
 class MPC:
     def __init__(self,
-                 state: Type[State],
+                 state0: Type[State],
                  s0: float, 
                  centerline_x_poly_coeffs: List[float],
                  centerline_y_poly_coeffs: List[float],
                  max_error: float,
                  runtime_params: Type[RuntimeControllerParameters],
-                 sol0: None,  # return of previous iteration
-                 duals: None,  # dual vars of previous
+                 sol0=None,  # return of previous iteration
+                 duals=None,  # dual vars of previous
+                 Ts=None,
+                 N=None
                  ) -> None:
         """
         state: initial vehicle state
@@ -28,10 +30,10 @@ class MPC:
 
         self.fixed_params = FixedControllerParameters()
         self.runtime_params = runtime_params
-        self.state0 = state
+        self.state0 = state0
 
         # Unpack variables for clarity.
-        N = self.fixed_params.N
+        N = self.fixed_params.N if N is None else N
         n = self.runtime_params.n
         q_v_y = self.runtime_params.q_v_y
         alpha_c = self.runtime_params.alpha_c
@@ -45,10 +47,11 @@ class MPC:
         max_steer = 1.0
         min_throttle = -1.0
         max_throttle = RuntimeControllerParameters.d_max
-        max_steer_delta = 0.1
+        max_steer_delta = 0.5
         max_throttle_delta = 0.2
         min_s_delta = 0.1
-        max_s_delta = VehicleParameters.Ts * VehicleParameters.max_vel  # max progress per timestep
+        Ts = FixedControllerParameters.Ts if Ts is None else Ts
+        max_s_delta = Ts * VehicleParameters.max_vel  # max progress per timestep
 
         # Decision variables. Column i is the <u/s/x> vector at time i. 
         U = opti.variable(2, N)  # throttle, steer in [-1, 1]
@@ -72,7 +75,7 @@ class MPC:
         e_hat_L = ca.Function('e_hat_L', [s, X], [-dGx(s)*(X[0] - Gx(s)) - dGy(s)*(X[1] - Gy(s))])
         e_tot = ca.Function('t_tot', [s, X], [e_hat_C(s, X)**2 + e_hat_L(s, X)**2])
 
-        f_vehicle = ca.Function('f_vehicle', [X, u], [self.f_vehicle(X, u)])
+        f_vehicle = ca.Function('f_vehicle', [X, u], [self.f_vehicle(X, u, Ts=Ts)])
         
         # Cost function (terminal costs).
         J = -lambda_s*S_hat[N]
@@ -91,29 +94,29 @@ class MPC:
 
         # Initial conditions.
         opti.subject_to(S_hat[0] == s0)
-        opti.subject_to(States[0, 0] == state.x)
-        opti.subject_to(States[1, 0] == state.y)
-        opti.subject_to(States[2, 0] == state.yaw)
-        opti.subject_to(States[3, 0] == state.v_x)
-        opti.subject_to(States[4, 0] == state.v_y)
-        opti.subject_to(States[5, 0] == state.yaw_dot)
+        opti.subject_to(States[0, 0] == state0.x)
+        opti.subject_to(States[1, 0] == state0.y)
+        opti.subject_to(States[2, 0] == state0.yaw)
+        opti.subject_to(States[3, 0] == state0.v_x)
+        opti.subject_to(States[4, 0] == state0.v_y)
+        opti.subject_to(States[5, 0] == state0.yaw_dot)
 
-        # Constraints, convienent to do some basic initialization here for now (TODO: improve).
-        state_direction = ca.vertcat([ca.cos(state.yaw), ca.sin(state.yaw)])
+
+        # Constraints, convienent to do some basic initialization here for now (TODO: could improve with a graph search).
+        state_direction = ca.vertcat([ca.cos(state0.yaw), ca.sin(state0.yaw)])
         state_direction = state_direction / ca.sqrt(state_direction[0]**2 + state_direction[1]**2)
         for i in range(1, N+1):
-            opti.set_initial(S_hat[i], s0 + i*VehicleParameters.Ts*VehicleParameters.max_vel)
-            opti.set_initial(States[0, i], state.x + state_direction[0]*i*VehicleParameters.Ts * (VehicleParameters.max_vel / 5))
-            opti.set_initial(States[1, i], state.y + state_direction[1]*i*VehicleParameters.Ts * (VehicleParameters.max_vel / 5))
-            opti.set_initial(States[2, i], state.yaw)
-            opti.set_initial(States[3, i], state.v_x)
-            opti.set_initial(States[4, i], state.v_y)
-            opti.set_initial(States[5, i], state.yaw_dot)
+            opti.set_initial(S_hat[i], s0 + i*Ts*VehicleParameters.max_vel)
+            opti.set_initial(States[0, i], state0.x + state_direction[0]*i*Ts * (VehicleParameters.max_vel / 5))
+            opti.set_initial(States[1, i], state0.y + state_direction[1]*i*Ts * (VehicleParameters.max_vel / 5))
+            opti.set_initial(States[2, i], state0.yaw)
+            opti.set_initial(States[3, i], state0.v_x)
+            opti.set_initial(States[4, i], state0.v_y)
+            opti.set_initial(States[5, i], state0.yaw_dot)
 
             opti.subject_to(States[:, i] == f_vehicle(States[:, i-1], U[:, i-1]))
-            opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )
-            opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))
-            # TODO EXAMINE MAX ERROR BOUNDS
+            opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )  # Bound progress estimation differences
+            opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))  # Stay within the lane
             
         for i in range(0, N):
             opti.subject_to(U[0, i] < max_throttle)
@@ -123,14 +126,21 @@ class MPC:
             opti.subject_to( opti.bounded(-1, U[0, i] - U[0, i-1], max_throttle_delta))
             opti.subject_to( opti.bounded(-max_steer_delta, U[1, i] - U[1, i-1], max_steer_delta))
 
-        # Should be set regardless of sol0.
+        # Initial guesses
         opti.set_initial(S_hat[0], s0)
-        opti.set_initial(States[0, 0], state.x)
-        opti.set_initial(States[1, 0], state.y)
-        opti.set_initial(States[2, 0], state.yaw)
-        opti.set_initial(States[3, 0], state.v_x)
-        opti.set_initial(States[4, 0], state.v_y)
-        opti.set_initial(States[5, 0], state.yaw_dot)
+        opti.set_initial(States[0, 0], state0.x)
+        opti.set_initial(States[1, 0], state0.y)
+        opti.set_initial(States[2, 0], state0.yaw)
+        opti.set_initial(States[3, 0], state0.v_x)
+        opti.set_initial(States[4, 0], state0.v_y)
+        opti.set_initial(States[5, 0], state0.yaw_dot)
+
+        if state0.throttle is not None:
+            opti.subject_to(U[0, 0] == state0.throttle)
+            opti.set_initial(U[0, 0], state0.throttle)
+        if state0.steer is not None:
+            opti.subject_to(U[1, 0] == state0.steer)
+            opti.set_initial(U[1, 0], state0.steer)
 
         opti.minimize(J)
         opti.solver('ipopt', {
@@ -164,7 +174,7 @@ class MPC:
     def solution(self):
         return self.sol, self.ret, self.dual
 
-    def f_vehicle(self, x_k, u_k):
+    def f_vehicle(self, x_k, u_k, Ts):
         """
         x_k: column of vehicle states
         u_k: column of commands (throttle, steer) in [-1, 1]
@@ -177,7 +187,6 @@ class MPC:
         lr = VehicleParameters.lr
         Cf = VehicleParameters.Cf
         Cr = VehicleParameters.Cr
-        Ts = FixedControllerParameters.Ts
 
         x, y, yaw, v_x, v_y, yaw_dot = x_k[0], x_k[1], x_k[2], x_k[3], x_k[4], x_k[5]
 

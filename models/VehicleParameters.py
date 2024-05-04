@@ -50,3 +50,5 @@ class VehicleParameters:
     Vblendmin: float = 2  # Minimum blending speed in meters per second
     Vblendmax: float = 15  # Maximum blending speed in meters per second
     Ts: int = 0.05  # Sampling time in seconds
+
+    car_width = 1.85  # car width is 1.85, this adds safety expansion (m)

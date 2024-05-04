@@ -8,3 +8,8 @@ class State:
     v_x: float      # Velocity in the x direction in the local frame
     v_y: float      # Velocity in the y direciton in the local frame
     yaw_dot: float
+
+    # Nice to include commands for e.g. passing initial values
+    # to MPC
+    steer: float = None
+    throttle: float = None
