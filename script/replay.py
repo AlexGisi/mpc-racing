@@ -3,7 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from splines.ParameterizedCenterline import ParameterizedCenterline
 
-START_STEP = 00
+START_STEP = 0
 
 cl = ParameterizedCenterline()
 cl.from_file("waypoints/shanghai_intl_circuit")

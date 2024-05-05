@@ -7,21 +7,25 @@ from models.VehicleParameters import VehicleParameters
 from control.MPC import MPC
 from control.util import make_poly
 from models.State import State
+import os
 
 POLY_DEG = 4
 POLY_LOOKBACK = 5
 
+SAVEDIR = "/home/alex/Pictures/OL-AUTO"
+step = 43
+
 cl = ParameterizedCenterline(track="shanghai_intl_circuit")
 # s = np.random.uniform(low=0, high=cl.length)
-s0 = 140
+s0 = 69.6
 ss = np.arange(s0, cl.length, 0.5)
 sol = None
 dual = None
 
-x, y = cl.Gx(s0), cl.Gy(s0)
+x, y = 171, 91.8
 yaw = cl.unit_tangent_yaw(s0)
-v_x, v_y, r = 15, 0, 0
-state0 = State(x=x, y=y, yaw=yaw, v_x=v_x, v_y=v_y, yaw_dot=r, throttle=0., steer=0.)
+v_x, v_y, r = 20, 0, 0
+state0 = State(x=x, y=y, yaw=-0.219, v_x=v_x, v_y=0.48, yaw_dot=-0.059, throttle=.19, steer=0.63)
 
 while True:
     dynamic_lookahead = 50
@@ -124,10 +128,12 @@ while True:
 
     plt.tight_layout()
     plt.show()
+    # plt.savefig(os.path.join(SAVEDIR, str(step) + '.png'))
+    step += 1
 
     s0 = s0 + 15
 
     # Perturb the car position from the centerline
-    upr = np.array(cl.unit_principal_normal(s0)) * np.random.uniform(-max_err/5, max_err/5)
+    upr = np.array(cl.unit_principal_normal(s0)) * np.random.uniform(-max_err/2, max_err/2)
     state0.x, state0.y = cl.Gx(s0)+upr[0], cl.Gy(s0)+upr[1]
     state0.yaw = cl.unit_tangent_yaw(s0)

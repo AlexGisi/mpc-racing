@@ -122,11 +122,11 @@ class Agent():
     def run_mpc(self):
         POLY_LOOKBACK = 5
         POLY_DEG = 4
-        LOOKAHEAD = 30
+        LOOKAHEAD = 20
         state0 = State(x=self.X, y=self.Y, yaw=self.yaw, v_x=self.vx, v_y=self.vy, yaw_dot=self.yawdot, 
                        throttle=self.cmd_throttle, steer=self.cmd_steer)
         N = int(np.ceil(LOOKAHEAD / (self.mean_ts * (state0.v_x))))
-        N = np.clip(N, 3, 6)
+        N = np.clip(N, 5, 9)
         cl_x_coeffs = self.cl.x_as_coeffs(self.progress-POLY_LOOKBACK, LOOKAHEAD+25, deg=POLY_DEG)
         cl_y_coeffs = self.cl.y_as_coeffs(self.progress-POLY_LOOKBACK, LOOKAHEAD+25, deg=POLY_DEG)
         max_err = self.cl.lookup_error(self.progress, LOOKAHEAD+25) - (VehicleParameters.car_width / 2)
@@ -201,33 +201,9 @@ class Agent():
         
         print(self.steps)
 
-        ### GA 
-        # if (self.curr_segtime_start == None):
-        #     self.curr_segtime_start = simulation_time
-
-        # if self.genetic_algorithm.getSegmentNumber(self.X, self.Y) != self.segment_count:
-        #     past_segment_time = simulation_time - self.curr_segtime_start
-        #     self.genetic_algorithm.updateSegmentTimings(self.population_index, past_segment_time)
-        #     
-        #     if self.population_index >= self.genetic_algorithm.getPopSize():
-        #         print("Genetic Algorithm Updating Genes:")
-        #         self.genetic_algorithm.runStep()
-        #         self.population_index = 0
-        #         self.curr_segtime_start = simulation_time
-        #     else:
-        #         self.population_index += 1
-
-        # TODO: get RuntimeParams from GA
-        # current_controller = self.genetic_algorithm.getPop(self.population_index)
-
-        ###
-                
-        ### Control computation
-        # if self.steps % 10 == 0:  # Run open-loop for half a second
-
         # TODO: just a fix for weird interpolation at beginning, need to fix that
         if self.progress > 20 and self.progress < 1000:
-            if self.steps % 1 == 0:
+            if self.steps % 2 == 0:
                 self.run_mpc()  # Sets self.predicted_states, self.controls
                 self.logger.pickle_mpc_res(self)
                 

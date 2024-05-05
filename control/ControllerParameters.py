@@ -25,8 +25,8 @@ class FixedControllerParameters:
 @dataclass
 class RuntimeControllerParameters:
     # Runtime MPC parameters (Costa p8).
-    alpha_c: float = 1000  # Penalty on centerline error
+    alpha_c: float = 650  # Penalty on centerline error
     d_max: float = 0.8  # Max throttle
-    q_v_y: float = 20  # Penalty on lateral acceleration
+    q_v_y: float = 100  # Penalty on lateral acceleration
     n: int = 4  # Exponent on e_hat_C; \in {2, 4, 6, 9, ...}; See top of p8
-    beta_delta: float = 400  # Penalty on difference in steering
+    beta_delta: float = 50000  # Penalty on difference in steering
