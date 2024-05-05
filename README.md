@@ -1,3 +1,15 @@
+# for akshay
+note the final work is across the branches `main` and `mpc`. The `main` branch implements the pure
+pursuit controller with optimization via GA in agent.py. the `mpc` branch implements the mpc in 
+agent.py.
+
+the `control` directory holds mpc-related files. the `models` directory holds files related
+to the development of the vehicle models (these are re-implemented in casadi symbolics in 
+`control/mpc.py`). the `splines` directory holds files related to the parameterization of
+the centerline and the lane boundaries. the `script` directory contains testing and visualization
+scripts for various parts of the project. 
+
+
 # autobots-race
 How to run:
 1. Start carla and change to the shanghai map, for example using the script `auxillary/carla.py`. 
