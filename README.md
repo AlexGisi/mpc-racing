@@ -12,6 +12,9 @@ scripts for various parts of the project.
 we did not consider obstacles in our problem statement, hence we did not include a video
 with scenarios. the extension is reasonably straightforward; we discuss this in the video.
 
+running shanghai:
+https://drive.google.com/file/d/1-f9xNyzWwORthsTG67wBQts_fH9zjB1e/view?usp=sharing
+
 
 # autobots-race
 How to run:
