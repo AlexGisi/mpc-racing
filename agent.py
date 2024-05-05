@@ -91,7 +91,7 @@ class Agent():
     
     def get_target_vel(self, lookahead, zeta=15):
         lower = np.clip(self.progress+zeta, lookahead, 10000)
-        k = 1.2  # k=1.2 is reasonable aggressive.
+        k = 1.34923  # k=1.2 is reasonable aggressive.
         self.kappa = self.centerline.mean_curvature(lower, lookahead)
         self.target_vel = np.clip(k*np.sqrt(9.81 / self.kappa), 10, 100)
 
@@ -152,8 +152,8 @@ class Agent():
         kP_steer = 1
         kD_steer = 1
 
-        kP_throttle = 0.8
-        kD_throttle = 1
+        kP_throttle = 0.82954
+        kD_throttle = 1.21341
         ### end PID control ###
 
         lookahead = 3
