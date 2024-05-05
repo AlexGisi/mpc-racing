@@ -9,6 +9,9 @@ to the development of the vehicle models (these are re-implemented in casadi sym
 the centerline and the lane boundaries. the `script` directory contains testing and visualization
 scripts for various parts of the project. 
 
+we did not consider obstacles in our problem statement, hence we did not include a video
+with scenarios. the extension is reasonably straightforward; we discuss this in the video.
+
 
 # autobots-race
 How to run:
