@@ -1,7 +1,9 @@
 # for akshay
-note the final work is across the branches `main` and `mpc`. The `main` branch implements the pure
-pursuit controller with optimization via GA in agent.py. the `mpc` branch implements the mpc in 
-agent.py.
+note the final work is across the branches `pp` and `mpc`. The `pp` branch implements the pure
+pursuit controller with the best parameters found via GA. the `mpc` branch implements the mpc in 
+agent.py. 
+
+to run the final agent: `git checkout pp`.
 
 the `control` directory holds mpc-related files. the `models` directory holds files related
 to the development of the vehicle models (these are re-implemented in casadi symbolics in 
@@ -12,7 +14,7 @@ scripts for various parts of the project.
 we did not consider obstacles in our problem statement, hence we did not include a video
 with scenarios. the extension is reasonably straightforward; we discuss this in the video.
 
-running shanghai:
+running shanghai video:
 https://drive.google.com/file/d/1-f9xNyzWwORthsTG67wBQts_fH9zjB1e/view?usp=sharing
 
 
