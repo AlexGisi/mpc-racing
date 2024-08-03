@@ -1,10 +1,12 @@
-# autobots-race
+# mpc-racing
 This repository contains all the code for an implementation of MPC-based racing in a Carla simulation. Features include
 - Smooth parameterization of racing tracks
 - Model predictive contouring controller for optimizing vehicle's progress along path
 - Custom combined PID and pure pursuit racing-tuned controllers for comparison
 - Optimization of MPC parameters using genetic algorithm
 - Kinematic, dynamic, and blended bicycle models with custom extensions to accurately model the simulation vehicle
+
+The simulation is built upon the GRAIC platoform for the CARLA simulator.
 
 ## Use
 How to run:
@@ -22,6 +24,11 @@ to the development of the vehicle models (these are re-implemented in casadi sym
 `control/mpc.py`). The `splines` directory holds files related to the parameterization of
 the centerline and the lane boundaries. The `script` directory contains testing and visualization
 scripts for various parts of the project.
+
+## Contributors
+- [@eeshanzele](https://github.com/eeshanzele)
+- [@soumilsg](https://github.com/Soumilsg)
+- [@ztmuiuc](https://github.com/ztmuiuc)
 
 # GRAIC 2023
 Installation Documentation could be found [Here](https://docs.google.com/document/d/1O0thKd-WcQzPpEvyfJZmjEr0xCWvgUkzzftlyZxOi_A/edit?usp=sharing)
