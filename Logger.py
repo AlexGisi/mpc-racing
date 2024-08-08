@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import pickle
 
 member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy',
@@ -10,10 +11,10 @@ class Logger:
     def __init__(self, fp, mpc_fp=None) -> None:
         self.fp = fp
         self.mpc_fp = mpc_fp
-        self.write_header()
 
         if mpc_fp:
             os.makedirs(mpc_fp, exist_ok=False)
+        self.write_header()
 
     def write_header(self):
         with open(self.fp, 'w') as f:
@@ -41,5 +42,6 @@ class Logger:
         data['predicted_states'] = agent.predicted_states
         data['controls'] = agent.controls
         data['mean_ts'] = agent.mean_ts
+        data['time'] = agent.mpc_time
         with open(os.path.join(self.mpc_fp, str(agent.steps)), 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)

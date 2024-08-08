@@ -4,6 +4,7 @@ recorded.
 """
 import pickle
 import os
+from math import floor
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -14,21 +15,23 @@ from control.util import make_poly
 from models.State import State
 from models.VehicleParameters import VehicleParameters
 
-START_NUM = 26
-STEP_MODULO = 1
-DATA_DIR = 'run'
+START_NUM = 1
+STEP_MODULO = 2
+DATA_DIR = 'runs/mpc-run-simple'
 POLY_DEG = 4
 POLY_LOOKBACK = 5
 
 cl = ParameterizedCenterline()
 df = pd.read_csv(os.path.join(DATA_DIR, 'data-mydrive.csv'))
 mpcs = []
-for step_num in sorted([ int(f) for f in list(os.walk(os.path.join(DATA_DIR, 'mpc')))[0][2] ]):
+file_numbers = sorted([ int(f) for f in list(os.walk(os.path.join(DATA_DIR, 'mpc')))[0][2] ])
+for step_num in file_numbers:
     with open(os.path.join(DATA_DIR, 'mpc', str(step_num)), 'rb') as f:
         step_dict = pickle.load(f)
         mpcs.append(step_dict)
 
-for mpc in mpcs[START_NUM:]:
+# start_idx = floor((START_NUM-file_numbers[0]) / STEP_MODULO)
+for i, mpc in enumerate(mpcs[START_NUM:]):
     print(f"controlled: {mpc['controlled']}")
 
     step_df = df[(df['steps'] >= mpc['step'])]
@@ -74,7 +77,10 @@ for mpc in mpcs[START_NUM:]:
     ax1.legend(loc='upper center', fancybox=True, shadow=True, ncol=5, fontsize=10)
 
     ax2.plot(range(len(controls)), [s for t, s in controls], label="Steer")
-    ax2.set_title("Generated commands")
+    try:
+        ax2.set_title(f"Generated commands (in {round(mpc['time'], 4)})")
+    except KeyError:
+        ax2.set_title(f"Generated commands")
     ax2.set_xlabel("Step")
     ax2.grid(True)
     ax2.plot(range(len(controls)), [t for t, s in controls], label="Throttle")
@@ -95,6 +101,7 @@ for mpc in mpcs[START_NUM:]:
     print(state0)
     print(s0)
     print(controls[0])
+    print("step ", file_numbers[i+START_NUM])
 
     # ax4.plot(range(len(S_hat)), S_hat, label="$\hat{s}$")
     # ax4.plot(range(len(states)), [cl.projection_local(s.x, s.y, bounds=(s0-10, s0+100), warn=False)[0] for s in states], label="s")

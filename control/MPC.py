@@ -116,7 +116,7 @@ class MPC:
 
             opti.subject_to(States[:, i] == f_vehicle(States[:, i-1], U[:, i-1]))
             opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )  # Bound progress estimation differences
-            opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))  # Stay within the lane
+            # opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))  # Stay within the lane
             
         for i in range(0, N):
             opti.subject_to(U[0, i] < max_throttle)
@@ -173,6 +173,35 @@ class MPC:
     
     def solution(self):
         return self.sol, self.ret, self.dual
+    
+    def f_vehicle2(self, x_k, u_k, Ts):
+        # Unpack parameters.
+        m = VehicleParameters.m
+        Iz = VehicleParameters.Iz
+        lf = VehicleParameters.lf
+        lr = VehicleParameters.lr
+        Cf = VehicleParameters.Cf
+        Cr = VehicleParameters.Cr
+
+        x, y, yaw, v_x, v_y, yaw_dot = x_k[0], x_k[1], x_k[2], x_k[3], x_k[4], x_k[5]
+
+        Fx = self.Fx(u_k[0], v_x)
+        delta = self.steer_cmd_to_angle(u_k[1], v_x, v_y)
+
+        v_x_dot = Fx / m
+        v_y_dot = u_k[1] / 100
+        yaw_dot_dot = u_k[1] / 10
+
+        # Integrate to find new state
+        x_new = x + (v_x * ca.cos(yaw) - v_y * ca.sin(yaw)) * Ts
+        y_new = y + (v_x * ca.sin(yaw) + v_y * ca.cos(yaw)) * Ts
+        yaw_new = yaw + yaw_dot * Ts
+        v_x_new = v_x + v_x_dot * Ts
+        v_y_new = v_y + v_y_dot * Ts
+        yaw_dot_new = yaw_dot + yaw_dot_dot * Ts
+
+        state_new = ca.vertcat(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)
+        return state_new
 
     def f_vehicle(self, x_k, u_k, Ts):
         """
