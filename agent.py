@@ -72,6 +72,9 @@ class Agent:
         self.last_sol = None
         self.last_duals = None
         self.last_controls = None
+        self.s_hat = None
+        self.e_hat_c = None
+        self.e_hat_l = None
 
     def progress_bound(self):
         """
@@ -183,7 +186,7 @@ class Agent:
         self.last_sol = sol
         self.last_duals = duals
 
-        States, U, S_hat, e_hat_c, e_hat_l = ret[0], ret[1], ret[2], ret[3], ret[4]
+        States, U, self.s_hat, self.e_hat_c, self.e_hat_l = ret[0], ret[1], ret[2], ret[3], ret[4]
         self.predicted_states = [
             State(x=t[0], y=t[1], yaw=t[2], v_x=t[3], v_y=t[4], yaw_dot=t[5])
             for t in zip(
@@ -232,21 +235,22 @@ class Agent:
         
         self.X = transform.location.x
         self.Y = transform.location.y
-        if self.yaw is None:
-            self.yawdot = 0
-        else:
-            self.yawdot = np.clip((np.deg2rad(transform.rotation.yaw) - self.yaw) / self.last_ts, -1, 1)
+
+        old_yaw = self.yaw
         self.yaw = np.deg2rad(transform.rotation.yaw)
+        if old_yaw is None:
+            self.yawdot = None
+        elif self.yaw - old_yaw > 6:
+            self.yawdot = (self.yaw - (old_yaw + np.pi * 2) ) / self.last_ts
+        elif self.yaw - old_yaw < -6:
+            self.yawdot = (self.yaw - (old_yaw - np.pi * 2) ) / self.last_ts
+        else:
+            self.yawdot = (self.yaw - old_yaw) / self.last_ts
 
         # Velocities in vehicle coordinates (y is lateral). Positive lateral velocity is to the left.
         self.vx = vel.x * np.cos(-self.yaw) - vel.y * np.sin(-self.yaw)
         self.vy = vel.x * np.sin(-self.yaw) + vel.y * np.cos(-self.yaw)
         self.vel = np.sqrt(self.vx**2 + self.vy**2)
-        # self.yawdot = (
-        #     self.vx / (VehicleParameters.lr + VehicleParameters.lf)
-        # ) * np.tan(
-        #     self.cmd_steer
-        # )  # Estimate yawdot geometrically.
 
         self.left_lane_points = [
             (waypoint.transform.location.x, waypoint.transform.location.y)

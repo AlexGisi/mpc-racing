@@ -86,7 +86,7 @@ class MPC:
         J = -lambda_s*S_hat[N]
         J += q_v_y*States[4, N]**2 
         J += alpha_c*e_hat_C(S_hat[N], States[:, N])**n 
-        J += alpha_L*e_hat_L(S_hat[N], States[:, N])**2  # fixed: needed square
+        J += alpha_L*e_hat_L(S_hat[N], States[:, N])**2
         J += ca.exp(q_v_max * (States[3, N] - v_max))
 
         # Cost function (stage costs). 
@@ -142,15 +142,10 @@ class MPC:
             opti.subject_to( opti.bounded(min_throttle_delta, U[0, i] - U[0, i-1], max_throttle_delta) )
             opti.subject_to( opti.bounded(min_steer_delta, U[1, i] - U[1, i-1], max_steer_delta) )
 
-        # breakpoint()
         if state0.throttle is not None:
-            # opti.subject_to(U[0, 0] == state0.throttle)
-            # opti.set_initial(U[0, 0], state0.throttle)
             opti.subject_to( opti.bounded(min_throttle_delta, U[0, 0] - state0.throttle, max_throttle_delta) )
 
         if state0.steer is not None:
-            # opti.subject_to(U[1, 0] == state0.steer)
-            # opti.set_initial(U[1, 0], state0.steer)
             opti.subject_to( opti.bounded(min_steer_delta, U[1, 0] - state0.steer, max_steer_delta) )
 
         opti.minimize(J)
@@ -159,6 +154,7 @@ class MPC:
                 'max_iter': FixedControllerParameters.max_iter,  # Maximum number of iterations
                 'print_level': 4,  # Adjust to control the verbosity of IPOPT output
                 'tol': 1e-4,  # Solver tolerance
+                'acceptable_tol': 1e-2,
                 'warm_start_init_point': 'no',
                 'check_derivatives_for_naninf': 'yes',
             }
@@ -186,35 +182,6 @@ class MPC:
     
     def solution(self):
         return self.sol, self.ret, self.dual
-    
-    def f_vehicle2(self, x_k, u_k, Ts):
-        # Unpack parameters.
-        m = VehicleParameters.m
-        Iz = VehicleParameters.Iz
-        lf = VehicleParameters.lf
-        lr = VehicleParameters.lr
-        Cf = VehicleParameters.Cf
-        Cr = VehicleParameters.Cr
-
-        x, y, yaw, v_x, v_y, yaw_dot = x_k[0], x_k[1], x_k[2], x_k[3], x_k[4], x_k[5]
-
-        Fx = self.Fx(u_k[0], v_x)
-        delta = self.steer_cmd_to_angle(u_k[1], v_x, v_y)
-
-        v_x_dot = Fx / m
-        v_y_dot = u_k[1] / 100
-        yaw_dot_dot = u_k[1] / 10
-
-        # Integrate to find new state
-        x_new = x + (v_x * ca.cos(yaw) - v_y * ca.sin(yaw)) * Ts
-        y_new = y + (v_x * ca.sin(yaw) + v_y * ca.cos(yaw)) * Ts
-        yaw_new = yaw + yaw_dot * Ts
-        v_x_new = v_x + v_x_dot * Ts
-        v_y_new = v_y + v_y_dot * Ts
-        yaw_dot_new = yaw_dot + yaw_dot_dot * Ts
-
-        state_new = ca.vertcat(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)
-        return state_new
 
     def f_vehicle(self, x_k, u_k, Ts):
         """

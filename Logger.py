@@ -43,5 +43,8 @@ class Logger:
         data['controls'] = agent.controls
         data['mean_ts'] = agent.mean_ts
         data['time'] = agent.mpc_time
+        data['s_hat'] = agent.s_hat
+        data['e_hat_c'] = agent.e_hat_c
+        data['e_hat_l'] = agent.e_hat_l
         with open(os.path.join(self.mpc_fp, str(agent.steps)), 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)

@@ -48,13 +48,14 @@ for i, mpc in enumerate(mpcs[START_NUM:]):
     max_err = cl.lookup_error(s0, dynamic_lookahead) - (VehicleParameters.car_width / 2)
 
     fig = plt.figure(figsize=(12, 10))
-    gs = gridspec.GridSpec(2, 3)
+    gs = gridspec.GridSpec(2, 4)
 
     # Assign subplots to the grid
     ax1 = fig.add_subplot(gs[0, :])  # Makes ax1 span all columns in the first row
     ax2 = fig.add_subplot(gs[1, 0])  # Remaining subplots in specified positions
     ax3 = fig.add_subplot(gs[1, 1])
     ax4 = fig.add_subplot(gs[1, 2])
+    ax5 = fig.add_subplot(gs[1, 3])
 
     cl_x = lambda s: make_poly(s, cl_x_coeffs)
     cl_y = lambda s: make_poly(s, cl_y_coeffs)
@@ -100,29 +101,27 @@ for i, mpc in enumerate(mpcs[START_NUM:]):
     ax3.grid(True)
 
     # ax4.plot(steps, step_df['last_ts'])
-    ax4.set_title(f"Simulation time steps (mean {round(mpc['mean_ts'], 3)})")
-    ax4.grid(True)
+    # ax4.set_title(f"Simulation time steps (mean {round(mpc['mean_ts'], 3)})")
+    # ax4.grid(True)
 
     print(state0)
     print(s0)
     print(controls[0])
     print("step ", file_numbers[i+START_NUM])
 
-    # ax4.plot(range(len(S_hat)), S_hat, label="$\hat{s}$")
-    # ax4.plot(range(len(states)), [cl.projection_local(s.x, s.y, bounds=(s0-10, s0+100), warn=False)[0] for s in states], label="s")
-    # ax4.set_xlabel("Step")
-    # ax4.grid(True)
-    # ax4.legend()
-    # ax4.set_title(r"Estimated and actual centerline progress")
+    ax4.plot(range(len(mpc['s_hat'])), mpc['s_hat'], label="$\hat{s}$")
+    ax4.plot(range(len(mpc['s_hat'])), step_df['progress'][:len(mpc['s_hat'])], label="s")
+    ax4.set_xlabel("Step")
+    ax4.grid(True)
+    ax4.legend()
+    ax4.set_title(r"Estimated and actual centerline progress")
 
-    # ax6.plot(range(len(e_hat_l)), e_hat_l, label=r"$\hat{e}_l$")
-    # ax6.plot(range(len(e_hat_c)), e_hat_c, label=r"$\hat{e}_c$")
-    # ax6.plot(range(len(e_hat_c)), [-max_err for _ in range(len(e_hat_c))], label="Min error", color='r')
-    # ax6.plot(range(len(e_hat_c)), [max_err for _ in range(len(e_hat_c))], label="Max error", color='r')
-    # ax6.set_title("Estimated centerline and lag errors")
-    # ax6.set_xlabel("Step")
-    # ax6.legend()
-    # ax6.grid(True)
+    ax5.plot(range(len(mpc['e_hat_l'])), mpc['e_hat_l'], label=r"$\hat{e}_l$")
+    ax5.plot(range(len(mpc['e_hat_l'])), mpc['e_hat_c'], label=r"$\hat{e}_c$")
+    ax5.set_title("estimated centerline and lag errors")
+    ax5.set_xlabel("Step")
+    ax5.legend()
+    ax5.grid(True)
 
     plt.tight_layout()
     plt.show()
