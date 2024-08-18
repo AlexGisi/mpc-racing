@@ -12,16 +12,12 @@ from models.State import State
 from control.MPC import MPC
 from models.VehicleParameters import VehicleParameters
 
-NUM = "no-error-constraint"
-DATA_FP = f"runs/mpc-run-{NUM}/data-mydrive.csv"
-MPC_DATA_FP = f"runs/mpc-run-{NUM}/mpc"
-
 
 class Agent:
     def __init__(self, vehicle=None):
         self.vehicle = vehicle
         self.cl = ParameterizedCenterline("shanghai_intl_circuit")
-        self.progress = None  # Car is spawned somwhere in the middle of the track.
+        self.progress = None  # Assume we don't know initial vehicle location.
 
         # Genetic algorithm
         # self.genetic_algorithm = GeneticAlgorithm()
@@ -57,7 +53,7 @@ class Agent:
         self.cmd_steer = 0
         self.cmd_throttle = 0
         self.cmd_break = 0
-        self.logger = Logger(DATA_FP, mpc_fp=MPC_DATA_FP)
+        self.logger = Logger(runs_fp='runs/')
 
         # For pp control
         self.delta = None
@@ -146,14 +142,19 @@ class Agent:
             throttle=self.cmd_throttle,
             steer=self.cmd_steer,
         )
-        N = int(np.ceil(LOOKAHEAD / (self.mean_ts * (state0.v_x))))
-        N = np.clip(N, 5, 9)
+        # N = int(np.ceil(LOOKAHEAD / (self.mean_ts * (state0.v_x))))
+        # N = np.clip(N, 5, 9)
+        N = 8
         print(N)
         cl_x_coeffs = self.cl.x_as_coeffs(
-            self.progress - POLY_LOOKBACK, LOOKAHEAD + 25, deg=POLY_DEG
+            s=self.progress - POLY_LOOKBACK, 
+            lookahead=LOOKAHEAD + 25, 
+            deg=POLY_DEG,
         )
         cl_y_coeffs = self.cl.y_as_coeffs(
-            self.progress - POLY_LOOKBACK, LOOKAHEAD + 25, deg=POLY_DEG
+            s=self.progress - POLY_LOOKBACK, 
+            lookahead=LOOKAHEAD + 25, 
+            deg=POLY_DEG,
         )
         max_err = self.cl.lookup_error(self.progress, LOOKAHEAD + 25) - (
             VehicleParameters.car_width / 2
@@ -220,19 +221,26 @@ class Agent:
         Return: carla.VehicleControl()
         """
         ### Data collection and transformation
+        self.last_ts = simulation_time - self.sim_time
+        self.sim_time = simulation_time
+        
         self.X = transform.location.x
         self.Y = transform.location.y
+        if self.yaw is None:
+            self.yawdot = 0
+        else:
+            self.yawdot = np.clip((np.deg2rad(transform.rotation.yaw) - self.yaw) / self.last_ts, -1, 1)
         self.yaw = np.deg2rad(transform.rotation.yaw)
 
         # Velocities in vehicle coordinates (y is lateral). Positive lateral velocity is to the left.
         self.vx = vel.x * np.cos(-self.yaw) - vel.y * np.sin(-self.yaw)
         self.vy = vel.x * np.sin(-self.yaw) + vel.y * np.cos(-self.yaw)
         self.vel = np.sqrt(self.vx**2 + self.vy**2)
-        self.yawdot = (
-            self.vx / (VehicleParameters.lr + VehicleParameters.lf)
-        ) * np.tan(
-            self.cmd_steer
-        )  # Estimate yawdot geometrically.
+        # self.yawdot = (
+        #     self.vx / (VehicleParameters.lr + VehicleParameters.lf)
+        # ) * np.tan(
+        #     self.cmd_steer
+        # )  # Estimate yawdot geometrically.
 
         self.left_lane_points = [
             (waypoint.transform.location.x, waypoint.transform.location.y)
@@ -253,24 +261,22 @@ class Agent:
             self.X, self.Y, bounds=self.progress_bound()
         )
         self.error = dist * self.cl.error_sign(self.X, self.Y, self.progress)
-
-        self.last_ts = simulation_time - self.sim_time
-        self.sim_time = simulation_time
         ###
 
         print("step ", self.steps)
 
-        # TODO: just a fix for weird interpolation at beginning, need to fix that
-        if self.progress > 20 and self.progress < 1000:
-            if self.steps % 2 == 0 or self.controls is None:
+        # 
+        print(f"progress {self.progress}")
+        if self.steps > 50:
+            self.logger.log(self)
+            if self.steps % 1 == 0 or self.controls is None:
                 self.run_mpc()  # Sets self.predicted_states, self.controls
                 self.logger.pickle_mpc_res(self)
-
             throttle, steer = self.controls.pop(0)
-            self.mean_ts = self.mean_ts + ((self.last_ts - self.mean_ts) / self.steps)
         else:
-            steer = 0
-            throttle = 0.5
+            throttle, steer = 0.5, 0.0
+        
+        self.mean_ts = self.mean_ts + ((self.last_ts - self.mean_ts) / (self.steps + 1))
         ###
 
         control = carla.VehicleControl()
@@ -290,6 +296,7 @@ class Agent:
         self.cmd_throttle = control.throttle
         self.cmd_brake = control.brake
 
-        self.logger.log(self)
+        if self.steps <= 50:
+            self.logger.log(self)
 
         return control

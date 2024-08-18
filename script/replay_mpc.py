@@ -4,6 +4,7 @@ recorded.
 """
 import pickle
 import os
+import sys
 from math import floor
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,14 +16,14 @@ from control.util import make_poly
 from models.State import State
 from models.VehicleParameters import VehicleParameters
 
-START_NUM = 1
+START_NUM = int(sys.argv[2]) if len(sys.argv) > 2 else 1
 STEP_MODULO = 2
-DATA_DIR = 'runs/mpc-run-simple'
+DATA_DIR = sys.argv[1]  # the run directory
 POLY_DEG = 4
 POLY_LOOKBACK = 5
 
 cl = ParameterizedCenterline()
-df = pd.read_csv(os.path.join(DATA_DIR, 'data-mydrive.csv'))
+df = pd.read_csv(os.path.join(DATA_DIR, 'steps.csv'))
 mpcs = []
 file_numbers = sorted([ int(f) for f in list(os.walk(os.path.join(DATA_DIR, 'mpc')))[0][2] ])
 for step_num in file_numbers:
@@ -30,7 +31,7 @@ for step_num in file_numbers:
         step_dict = pickle.load(f)
         mpcs.append(step_dict)
 
-# start_idx = floor((START_NUM-file_numbers[0]) / STEP_MODULO)
+print(f"total steps: {len(mpcs)}")
 for i, mpc in enumerate(mpcs[START_NUM:]):
     print(f"controlled: {mpc['controlled']}")
 
@@ -69,6 +70,9 @@ for i, mpc in enumerate(mpcs[START_NUM:]):
     ax1.scatter([s.x for s in states], [s.y for s in states], zorder=50, s=2, linewidths=4, marker='o', linestyle='-', color='r', label="Predicted path")
     ax1.scatter(step_df['X'], step_df['Y'], zorder=49, s=2, linewidths=4, marker='o', linestyle='-', color='g', label="Actual path")
 
+    for s in states:
+        ax1.arrow(s.x, s.y, np.cos(s.yaw), np.sin(s.yaw))
+
     ax1.set_title(r"States ($s_0$=" + str(s0) + ")")
     ax1.set_xlim(state0.x-80, state0.x+80)
     ax1.set_ylim(np.min([s.y for s in states])-20, np.max([s.y for s in states])+20)
@@ -76,25 +80,26 @@ for i, mpc in enumerate(mpcs[START_NUM:]):
 
     ax1.legend(loc='upper center', fancybox=True, shadow=True, ncol=5, fontsize=10)
 
-    ax2.plot(range(len(controls)), [s for t, s in controls], label="Steer")
-    try:
-        ax2.set_title(f"Generated commands (in {round(mpc['time'], 4)})")
-    except KeyError:
-        ax2.set_title(f"Generated commands")
+    ax2.plot(range(len(controls)), [s for t, s in controls], 'b--', label="predicted steer")
+    ax2.plot(range(len(controls)), [t for t, s in controls], 'g--', label="predicted throttle")
+    ax2.plot(range(len(controls)), step_df['cmd_steer'][:len(controls)], 'b-', label="actual steer")
+    ax2.plot(range(len(controls)), step_df['cmd_throttle'][:len(controls)], 'g-', label="actual throttle")
+    ax2.set_title(f"Generated commands (took {round(mpc['time'], 4)}s)")
     ax2.set_xlabel("Step")
     ax2.grid(True)
-    ax2.plot(range(len(controls)), [t for t, s in controls], label="Throttle")
     ax2.set_ylim(-1, 1)
     ax2.legend()
 
-    ax3.plot(range(len(states)), [state.v_x for state in states], label="v_x")
-    ax3.plot(range(len(states)), [state.v_y for state in states], label="v_y")
+    ax3.plot(range(len(states)), [state.v_x for state in states], 'b--', label="predicted v_x")
+    ax3.plot(range(len(states)), [state.v_y for state in states], 'g--', label="predicted v_y")
+    ax3.plot(range(len(step_df['vx'][:len(states)])), step_df['vx'][:len(states)], 'b-', label="actual v_x")
+    ax3.plot(range(len(step_df['vy'][:len(states)])), step_df['vy'][:len(states)], 'g-', label="actual v_y")
     ax3.set_title("Predicted velocities")
     ax3.set_xlabel("Step")
     ax3.legend()
     ax3.grid(True)
 
-    ax4.plot(steps, step_df['last_ts'])
+    # ax4.plot(steps, step_df['last_ts'])
     ax4.set_title(f"Simulation time steps (mean {round(mpc['mean_ts'], 3)})")
     ax4.grid(True)
 

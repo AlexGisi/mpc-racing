@@ -1,19 +1,19 @@
 import os
-from pathlib import Path
+from datetime import datetime 
 import pickle
 
-member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy',
+member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy', 'yawdot',
                 'progress', 'error', 'cmd_throttle', 'cmd_steer',
                 'next_left_lane_point_x', 'next_left_lane_point_y', 'next_right_lane_point_x',
                 'next_right_lane_point_y', 'last_ts']
 
 class Logger:
-    def __init__(self, fp, mpc_fp=None) -> None:
-        self.fp = fp
-        self.mpc_fp = mpc_fp
+    def __init__(self, runs_fp) -> None:
+        self.log_dir = os.path.join(runs_fp, datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+        self.fp = os.path.join(self.log_dir, 'steps.csv')
+        self.mpc_fp = os.path.join(self.log_dir, 'mpc')
 
-        if mpc_fp:
-            os.makedirs(mpc_fp, exist_ok=False)
+        os.makedirs(self.mpc_fp, exist_ok=False)
         self.write_header()
 
     def write_header(self):

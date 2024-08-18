@@ -43,11 +43,11 @@ class MPC:
         v_max = self.fixed_params.v_max
         lambda_s = self.fixed_params.lambda_s
 
-        min_steer = -1.0
-        max_steer = 1.0
+        min_steer = -0.8
+        max_steer = 0.8
         min_throttle = -1.0
         max_throttle = RuntimeControllerParameters.d_max
-        max_steer_delta = 0.5
+        max_steer_delta = 0.4
         max_throttle_delta = 0.2
         min_s_delta = 0.1
         Ts = FixedControllerParameters.Ts if Ts is None else Ts
@@ -81,7 +81,7 @@ class MPC:
         J = -lambda_s*S_hat[N]
         J += q_v_y*States[4, N]**2 
         J += alpha_c*e_hat_C(S_hat[N], States[:, N])**n 
-        J += alpha_L*e_hat_L(S_hat[N], States[:, N]) 
+        J += alpha_L*e_hat_L(S_hat[N], States[:, N])**2  # fixed: needed square
         J += ca.exp(q_v_max * (States[3, N] - v_max))
 
         # Cost function (stage costs). 
@@ -101,6 +101,13 @@ class MPC:
         opti.subject_to(States[4, 0] == state0.v_y)
         opti.subject_to(States[5, 0] == state0.yaw_dot)
 
+        opti.set_initial(S_hat[0], s0)
+        opti.set_initial(States[0, 0], state0.x)
+        opti.set_initial(States[1, 0], state0.y)
+        opti.set_initial(States[2, 0], state0.yaw)
+        opti.set_initial(States[3, 0], state0.v_x)
+        opti.set_initial(States[4, 0], state0.v_y)
+        opti.set_initial(States[5, 0], state0.yaw_dot)
 
         # Constraints, convienent to do some basic initialization here for now (TODO: could improve with a graph search).
         state_direction = ca.vertcat([ca.cos(state0.yaw), ca.sin(state0.yaw)])
@@ -123,17 +130,8 @@ class MPC:
             opti.subject_to(U[0, i] > min_throttle)
             opti.subject_to(U[1, i] < max_steer)
             opti.subject_to(U[1, i] > min_steer)
-            opti.subject_to( opti.bounded(-1, U[0, i] - U[0, i-1], max_throttle_delta))
-            opti.subject_to( opti.bounded(-max_steer_delta, U[1, i] - U[1, i-1], max_steer_delta))
-
-        # Initial guesses
-        opti.set_initial(S_hat[0], s0)
-        opti.set_initial(States[0, 0], state0.x)
-        opti.set_initial(States[1, 0], state0.y)
-        opti.set_initial(States[2, 0], state0.yaw)
-        opti.set_initial(States[3, 0], state0.v_x)
-        opti.set_initial(States[4, 0], state0.v_y)
-        opti.set_initial(States[5, 0], state0.yaw_dot)
+            opti.subject_to( opti.bounded(-max_throttle_delta, U[0, i] - U[0, i-1], max_throttle_delta) )
+            opti.subject_to( opti.bounded(-max_steer_delta, U[1, i] - U[1, i-1], max_steer_delta) )
 
         if state0.throttle is not None:
             opti.subject_to(U[0, 0] == state0.throttle)
@@ -151,7 +149,7 @@ class MPC:
                 'warm_start_init_point': 'yes',
             }
         })
-
+        
         # Use same return structure so failures can be handled in the same way.
         try:
             self.sol = opti.solve()
@@ -163,6 +161,7 @@ class MPC:
             self.dual = self.sol.value(opti.lam_g)
         except RuntimeError as e:  # found infeasible solution or exceeded iterations or ...
             print(e)
+            breakpoint()
             self.ret = (opti.debug.value(States), 
                         opti.debug.value(U), 
                         opti.debug.value(S_hat), 
@@ -244,6 +243,37 @@ class MPC:
         v_x_new = v_x + v_x_dot * Ts
         v_y_new = v_y + v_y_dot * Ts
         yaw_dot_new = yaw_dot + yaw_dot_dot * Ts
+
+        state_new = ca.vertcat(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)
+        return state_new
+    
+    def f_vehicle_kinematic(self, x_k, u_k, Ts):
+        """
+        x_k: column of vehicle states
+        u_k: column of commands (throttle, steer) in [-1, 1]
+        Vehicle dynamics for state constraint.
+        """
+        # Unpack parameters.
+        m = VehicleParameters.m
+        Iz = VehicleParameters.Iz
+        lf = VehicleParameters.lf
+        lr = VehicleParameters.lr
+        Cf = VehicleParameters.Cf
+        Cr = VehicleParameters.Cr
+
+        x, y, yaw, v_x, v_y, yaw_dot = x_k[0], x_k[1], x_k[2], x_k[3], x_k[4], x_k[5]
+
+        # Convert commands to physical values.
+        Fx = self.Fx(u_k[0], v_x)
+        delta = self.steer_cmd_to_angle(u_k[1], v_x, v_y)
+
+        # Integrate to find new state
+        x_new = x + (v_x * ca.cos(yaw) - v_y * ca.sin(yaw)) * Ts
+        y_new = y + (v_x * ca.sin(yaw) + v_y * ca.cos(yaw)) * Ts
+        yaw_new = yaw + ( yaw_dot ) * Ts
+        v_x_new = v_x + (Fx / m) * Ts
+        v_y_new = yaw_dot * lr
+        yaw_dot_new = (v_x / (lr + lf)) * ca.tan(delta)
 
         state_new = ca.vertcat(x_new, y_new, yaw_new, v_x_new, v_y_new, yaw_dot_new)
         return state_new
