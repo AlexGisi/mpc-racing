@@ -3,7 +3,7 @@ from datetime import datetime
 import pickle
 
 member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy', 'yawdot',
-                'progress', 'error', 'cmd_throttle', 'cmd_steer',
+                'progress', 'error', 'cmd_throttle', 'cmd_steer', 'cmd_brake',
                 'next_left_lane_point_x', 'next_left_lane_point_y', 'next_right_lane_point_x',
                 'next_right_lane_point_y', 'last_ts', 'mpc_time']
 
@@ -40,7 +40,7 @@ class Logger:
         data['controlled'] = (agent.steps >= agent.start_control_at)
         data['step'] = agent.steps
         data['predicted_states'] = agent.predicted_states
-        data['controls'] = agent.controls
+        data['controls'] = agent.last_controls  # Because controls array gets popped from.
         data['mean_ts'] = agent.mean_ts
         data['time'] = agent.mpc_time
         data['s_hat'] = agent.s_hat

@@ -5,14 +5,10 @@ class VehicleParameters:
     # FST10d model parameters for the kinematic, dynamic, and blended models.
     
     # General car parameters
-    m: float = 1845.0  # Vehicle mass in kilograms
-    max_steer = 70.0  # Deg
-    min_steer = -70.0  # Deg
-    max_accel = 15.
-    min_accel = -15.
-    max_steer_delta = 20.
-    max_accel_delta = 5  # kind of randomly chosen, used in mpc.py
-    max_vel = 33  # (m/s)
+    m: float = 1845.0  # kg
+    max_steer = 70.0  # deg
+    min_steer = -70.0  # deg
+    max_vel = 33.0  # m/s
 
     # For Fx
     eta_motor = 0.9 # (default, changed in Fx() function)

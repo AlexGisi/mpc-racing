@@ -50,9 +50,9 @@ class Agent:
         self.sim_time = 0
         self.last_ts = 0
 
-        self.cmd_steer = 0
-        self.cmd_throttle = 0
-        self.cmd_break = 0
+        self.cmd_steer = 0.0
+        self.cmd_throttle = 0.0
+        self.cmd_break = 0.0
         self.logger = Logger(runs_fp='runs/')
 
         # For pp control
@@ -64,6 +64,7 @@ class Agent:
 
         # For mpc control
         self.start_control_at = 50
+        self.do_control_every = 1
         self.runtime_params = RuntimeControllerParameters()
         self.predicted_states = None  # Includes initial state
         self.controls = None
@@ -145,7 +146,7 @@ class Agent:
             v_x=self.vx,
             v_y=self.vy,
             yaw_dot=self.yawdot,
-            throttle=self.cmd_throttle,
+            throttle=self.cmd_throttle if self.cmd_brake == 0 else -self.cmd_brake,
             steer=self.cmd_steer,
         )
         # N = int(np.ceil(LOOKAHEAD / (self.mean_ts * (state0.v_x))))
@@ -240,9 +241,9 @@ class Agent:
         self.yaw = np.deg2rad(transform.rotation.yaw)
         if old_yaw is None:
             self.yawdot = None
-        elif self.yaw - old_yaw > 6:
+        elif self.yaw - old_yaw > 3:
             self.yawdot = (self.yaw - (old_yaw + np.pi * 2) ) / self.last_ts
-        elif self.yaw - old_yaw < -6:
+        elif self.yaw - old_yaw < -3:
             self.yawdot = (self.yaw - (old_yaw - np.pi * 2) ) / self.last_ts
         else:
             self.yawdot = (self.yaw - old_yaw) / self.last_ts
@@ -273,15 +274,10 @@ class Agent:
         self.error = dist * self.cl.error_sign(self.X, self.Y, self.progress)
         ###
 
-        print("step ", self.steps)
-
-        # 
-        print(f"progress {self.progress}")
-        if self.steps > 50:
-            self.logger.log(self)
-            if self.steps % 1 == 0 or self.controls is None:
+        # Control calculation.
+        if self.steps >= self.start_control_at:
+            if self.steps % self.do_control_every == 0 or self.controls is None:
                 self.run_mpc()  # Sets self.predicted_states, self.controls
-                self.logger.pickle_mpc_res(self)
             throttle, steer = self.controls.pop(0)
         else:
             throttle, steer = 0.5, 0.0
@@ -289,6 +285,7 @@ class Agent:
         self.mean_ts = self.mean_ts + ((self.last_ts - self.mean_ts) / (self.steps + 1))
         ###
 
+        # Control application.
         control = carla.VehicleControl()
         control.steer = steer
         if throttle < 0:
@@ -297,16 +294,21 @@ class Agent:
         else:
             control.brake = 0
             control.throttle = throttle
+        ###
 
+        # Logging.
+        print("step: ", self.steps)
         print("control: ", control.throttle, control.steer, control.brake)
 
-        self.steps += 1
         self.last_error = self.error
         self.cmd_steer = control.steer
         self.cmd_throttle = control.throttle
         self.cmd_brake = control.brake
 
-        if self.steps <= 50:
-            self.logger.log(self)
+        self.logger.pickle_mpc_res(self)
+        self.logger.log(self)
+        ###
+
+        self.steps += 1
 
         return control

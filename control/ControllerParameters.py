@@ -11,7 +11,7 @@ class FixedControllerParameters:
     min_throttle: float = -1.0
     max_steer_delta: float = 0.1
     min_steer_delta: float = -0.1
-    max_throttle_delta: float = 0.4
+    max_throttle_delta: float = 0.4  # todo: can increase these
     min_throttle_delta: float = -0.4
 
     q_v_max: float = 2  # Soft constraint on velocity

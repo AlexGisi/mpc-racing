@@ -32,7 +32,7 @@ for step_num in file_numbers:
         mpcs.append(step_dict)
 
 print(f"total steps: {len(mpcs)}")
-for i, mpc in enumerate(mpcs[START_NUM:]):
+for i, mpc in enumerate(mpcs[START_NUM-file_numbers[0]:]):
     print(f"controlled: {mpc['controlled']}")
 
     step_df = df[(df['steps'] >= mpc['step'])]
@@ -81,10 +81,13 @@ for i, mpc in enumerate(mpcs[START_NUM:]):
 
     ax1.legend(loc='upper center', fancybox=True, shadow=True, ncol=5, fontsize=10)
 
+    # throttle_mask = df['cmd_throttle'].replace(0, np.nan).notna()
+    # linear_cmd = df['cmd_throttle'].where(throttle_mask, -df['cmd_brake'])
+
     ax2.plot(range(len(controls)), [s for t, s in controls], 'b--', label="predicted steer")
     ax2.plot(range(len(controls)), [t for t, s in controls], 'g--', label="predicted throttle")
     ax2.plot(range(len(controls)), step_df['cmd_steer'][:len(controls)], 'b-', label="actual steer")
-    ax2.plot(range(len(controls)), step_df['cmd_throttle'][:len(controls)], 'g-', label="actual throttle")
+    ax2.plot(range(len(controls)), step_df['cmd_throttle'][:len(controls)]-step_df['cmd_brake'][:len(controls)], 'g-', label="actual throttle")
     ax2.set_title(f"Generated commands (took {round(mpc['time'], 4)}s)")
     ax2.set_xlabel("Step")
     ax2.grid(True)

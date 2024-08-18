@@ -267,27 +267,18 @@ class MPC:
         vel = ca.sqrt(v_x**2 + v_y**2) * 3.6  # km/h
 
         # Define gain based on velocity via torque curve
-        # gain = ca.if_else(vel < 20, 1.0, 
-        #                 ca.if_else(vel < 60, 0.9, 
-        #                             ca.if_else(vel < 120, 0.8, 0.7)))
+        gain = -0.001971664699 * vel + 0.986547
 
-        gain = 0.9
         return deg2rad(steer_cmd * gain * VehicleParameters.max_steer)
 
     def Fx(self, throttle, v_x):
         wheel_rpm = (v_x / VehicleParameters.C_wheel) * 60
         rpm = wheel_rpm * VehicleParameters.R * 4.5  # 4.5 is an estimated adjust based on observation
 
-        eta = 0.6
-        # eta = ca.if_else(rpm < 9000, 1.0,
-        #          ca.if_else(rpm < 9500, 0.88,
-        #                     ca.if_else(rpm < 10_400, 0.81,
-        #                                ca.if_else(rpm < 12_500, 0.71, 0.675))))
+        eta = -0.00004428225806 * rpm + 1.282413306
         
-        carla_penalty = normal_pdf(throttle, mean=0.5, variance=0.0775) * VehicleParameters.m
-
         wheel_force = throttle*eta*VehicleParameters.T_max*VehicleParameters.R / VehicleParameters.r_wheel
         drag_force = 0.5*VehicleParameters.rho*VehicleParameters.C_d*VehicleParameters.A_f*(v_x**2)
         rolling_resistance = VehicleParameters.C_roll*VehicleParameters.m*VehicleParameters.g
 
-        return wheel_force - drag_force - rolling_resistance - carla_penalty
+        return wheel_force - drag_force - rolling_resistance
