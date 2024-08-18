@@ -1,4 +1,6 @@
+runs/
 *.txt
+data-mydrive.csv
 
 .DS_Store
 

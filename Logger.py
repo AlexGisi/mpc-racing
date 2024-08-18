@@ -1,13 +1,19 @@
-import csv
+import os
+from datetime import datetime 
+import pickle
 
-member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy',
+member_names = ['steps', 'X', 'Y', 'yaw', 'vx', 'vy', 'yawdot',
                 'progress', 'error', 'cmd_throttle', 'cmd_steer',
                 'next_left_lane_point_x', 'next_left_lane_point_y', 'next_right_lane_point_x',
-                'next_right_lane_point_y']
+                'next_right_lane_point_y', 'last_ts', 'mpc_time']
 
 class Logger:
-    def __init__(self, fp) -> None:
-        self.fp = fp
+    def __init__(self, runs_fp) -> None:
+        self.log_dir = os.path.join(runs_fp, datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+        self.fp = os.path.join(self.log_dir, 'steps.csv')
+        self.mpc_fp = os.path.join(self.log_dir, 'mpc')
+
+        os.makedirs(self.mpc_fp, exist_ok=False)
         self.write_header()
 
     def write_header(self):
@@ -28,3 +34,17 @@ class Logger:
                 log_str += ","
         log_str += '\n'
         return log_str
+    
+    def pickle_mpc_res(self, agent):
+        data = {}
+        data['controlled'] = (agent.steps >= agent.start_control_at)
+        data['step'] = agent.steps
+        data['predicted_states'] = agent.predicted_states
+        data['controls'] = agent.controls
+        data['mean_ts'] = agent.mean_ts
+        data['time'] = agent.mpc_time
+        data['s_hat'] = agent.s_hat
+        data['e_hat_c'] = agent.e_hat_c
+        data['e_hat_l'] = agent.e_hat_l
+        with open(os.path.join(self.mpc_fp, str(agent.steps)), 'wb') as f:
+            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
