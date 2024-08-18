@@ -16,6 +16,7 @@ class MPC:
                  runtime_params: Type[RuntimeControllerParameters],
                  sol0=None,  # return of previous iteration
                  duals=None,  # dual vars of previous
+                 last_controls=None,
                  Ts=None,
                  N=None
                  ) -> None:
@@ -43,15 +44,19 @@ class MPC:
         v_max = self.fixed_params.v_max
         lambda_s = self.fixed_params.lambda_s
 
-        min_steer = -0.8
-        max_steer = 0.8
-        min_throttle = -1.0
+        min_steer = self.fixed_params.min_steer
+        max_steer = self.fixed_params.max_steer
+        min_throttle = self.fixed_params.min_throttle
         max_throttle = RuntimeControllerParameters.d_max
-        max_steer_delta = 0.4
-        max_throttle_delta = 0.2
-        min_s_delta = 0.1
+        max_steer_delta = self.fixed_params.max_steer_delta
+        min_steer_delta = self.fixed_params.min_steer_delta
+        max_throttle_delta = self.fixed_params.max_throttle_delta
+        min_throttle_delta = self.fixed_params.min_throttle_delta
+        
+
         Ts = FixedControllerParameters.Ts if Ts is None else Ts
         max_s_delta = Ts * VehicleParameters.max_vel  # max progress per timestep
+        min_s_delta = 0.1
 
         # Decision variables. Column i is the <u/s/x> vector at time i. 
         U = opti.variable(2, N)  # throttle, steer in [-1, 1]
@@ -109,17 +114,21 @@ class MPC:
         opti.set_initial(States[4, 0], state0.v_y)
         opti.set_initial(States[5, 0], state0.yaw_dot)
 
-        # Constraints, convienent to do some basic initialization here for now (TODO: could improve with a graph search).
-        state_direction = ca.vertcat([ca.cos(state0.yaw), ca.sin(state0.yaw)])
-        state_direction = state_direction / ca.sqrt(state_direction[0]**2 + state_direction[1]**2)
+        # Constraints, convienent to do some basic initialization here for now.
+        init_s0 = ca.vertcat(state0.x, state0.y, state0.yaw, state0.v_x, state0.v_y, state0.yaw_dot)
+
+        if last_controls is not None:
+            u_pred = ca.horzcat(*last_controls[1:], last_controls[-1])
+        else:
+            u_pred = ca.horzcat(*[(state0.throttle, state0.steer) for _ in range(N)])
+
+        opti.set_initial(U, u_pred)
         for i in range(1, N+1):
-            opti.set_initial(S_hat[i], s0 + i*Ts*VehicleParameters.max_vel)
-            opti.set_initial(States[0, i], state0.x + state_direction[0]*i*Ts * (VehicleParameters.max_vel / 5))
-            opti.set_initial(States[1, i], state0.y + state_direction[1]*i*Ts * (VehicleParameters.max_vel / 5))
-            opti.set_initial(States[2, i], state0.yaw)
-            opti.set_initial(States[3, i], state0.v_x)
-            opti.set_initial(States[4, i], state0.v_y)
-            opti.set_initial(States[5, i], state0.yaw_dot)
+            opti.set_initial(S_hat[i], s0 + i*Ts*VehicleParameters.max_vel)  # todo
+
+            pred = self.f_vehicle(init_s0, u_pred[:, i-1], Ts=Ts)
+            opti.set_initial(States[:, i], pred)
+            init_s0 = pred
 
             opti.subject_to(States[:, i] == f_vehicle(States[:, i-1], U[:, i-1]))
             opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )  # Bound progress estimation differences
@@ -130,12 +139,14 @@ class MPC:
             opti.subject_to(U[0, i] > min_throttle)
             opti.subject_to(U[1, i] < max_steer)
             opti.subject_to(U[1, i] > min_steer)
-            opti.subject_to( opti.bounded(-max_throttle_delta, U[0, i] - U[0, i-1], max_throttle_delta) )
-            opti.subject_to( opti.bounded(-max_steer_delta, U[1, i] - U[1, i-1], max_steer_delta) )
+            opti.subject_to( opti.bounded(min_throttle_delta, U[0, i] - U[0, i-1], max_throttle_delta) )
+            opti.subject_to( opti.bounded(min_throttle_delta, U[1, i] - U[1, i-1], max_steer_delta) )
 
+        # breakpoint()
         if state0.throttle is not None:
             opti.subject_to(U[0, 0] == state0.throttle)
             opti.set_initial(U[0, 0], state0.throttle)
+
         if state0.steer is not None:
             opti.subject_to(U[1, 0] == state0.steer)
             opti.set_initial(U[1, 0], state0.steer)
@@ -146,7 +157,8 @@ class MPC:
                 'max_iter': FixedControllerParameters.max_iter,  # Maximum number of iterations
                 'print_level': 4,  # Adjust to control the verbosity of IPOPT output
                 'tol': 1e-4,  # Solver tolerance
-                'warm_start_init_point': 'yes',
+                'warm_start_init_point': 'no',
+                'check_derivatives_for_naninf': 'yes',
             }
         })
         

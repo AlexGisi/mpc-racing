@@ -69,6 +69,9 @@ class Agent:
         self.controls = None
         self.mean_ts = 0.3
         self.mpc_time = 0
+        self.last_sol = None
+        self.last_duals = None
+        self.last_controls = None
 
     def progress_bound(self):
         """
@@ -163,8 +166,9 @@ class Agent:
         start_time = time()
         mpc = MPC(
             state0=state0,
-            sol0=None,
-            duals=None,
+            sol0=self.last_sol,
+            duals=self.last_duals,
+            last_controls=self.last_controls,
             s0=self.progress,
             centerline_x_poly_coeffs=cl_x_coeffs,
             centerline_y_poly_coeffs=cl_y_coeffs,
@@ -175,6 +179,9 @@ class Agent:
         )
         sol, ret, duals = mpc.solution()
         self.mpc_time = time() - start_time
+
+        self.last_sol = sol
+        self.last_duals = duals
 
         States, U, S_hat, e_hat_c, e_hat_l = ret[0], ret[1], ret[2], ret[3], ret[4]
         self.predicted_states = [
@@ -190,9 +197,9 @@ class Agent:
         ]
         self.controls = [
             (throttle, steer) for throttle, steer in zip(U[0, :], U[1, :])
-        ][
-            1:
-        ]  # Ignore the fixed initial command
+        ]
+        self.last_controls = self.controls.copy()
+        self.controls = self.controls[1:]  # Discard the fixed initial control.
 
     def run_step(
         self, filtered_obstacles, waypoints, vel, transform, boundary, simulation_time

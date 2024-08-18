@@ -5,9 +5,17 @@ class FixedControllerParameters:
     # Fixed MPC parameters (Costa p8).
     lambda_s: float = 500  # Reward on track progress at prediction horizon
     alpha_L: float = 2000 # Penalty on lag approximation
-    
-    q_v_max: float = 5  # Soft constraint on velocity
-    v_max: float = 30
+
+    min_steer: float = -0.8
+    max_steer: float = 0.8
+    min_throttle: float = -1.0
+    max_steer_delta: float = 0.1
+    min_steer_delta: float = -0.1
+    max_throttle_delta: float = 0.4
+    min_throttle_delta: float = -0.4
+
+    q_v_max: float = 2  # Soft constraint on velocity
+    v_max: float = 50
     Delta_d_max: float = 0.2
     Delta_delta_max: float = 0.075
     delta_max: float = 0.47
