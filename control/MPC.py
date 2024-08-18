@@ -140,16 +140,18 @@ class MPC:
             opti.subject_to(U[1, i] < max_steer)
             opti.subject_to(U[1, i] > min_steer)
             opti.subject_to( opti.bounded(min_throttle_delta, U[0, i] - U[0, i-1], max_throttle_delta) )
-            opti.subject_to( opti.bounded(min_throttle_delta, U[1, i] - U[1, i-1], max_steer_delta) )
+            opti.subject_to( opti.bounded(min_steer_delta, U[1, i] - U[1, i-1], max_steer_delta) )
 
         # breakpoint()
         if state0.throttle is not None:
-            opti.subject_to(U[0, 0] == state0.throttle)
-            opti.set_initial(U[0, 0], state0.throttle)
+            # opti.subject_to(U[0, 0] == state0.throttle)
+            # opti.set_initial(U[0, 0], state0.throttle)
+            opti.subject_to( opti.bounded(min_throttle_delta, U[0, 0] - state0.throttle, max_throttle_delta) )
 
         if state0.steer is not None:
-            opti.subject_to(U[1, 0] == state0.steer)
-            opti.set_initial(U[1, 0], state0.steer)
+            # opti.subject_to(U[1, 0] == state0.steer)
+            # opti.set_initial(U[1, 0], state0.steer)
+            opti.subject_to( opti.bounded(min_steer_delta, U[1, 0] - state0.steer, max_steer_delta) )
 
         opti.minimize(J)
         opti.solver('ipopt', {

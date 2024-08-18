@@ -199,10 +199,9 @@ class Agent:
             (throttle, steer) for throttle, steer in zip(U[0, :], U[1, :])
         ]
         self.last_controls = self.controls.copy()
-        self.controls = self.controls[1:]  # Discard the fixed initial control.
 
     def run_step(
-        self, filtered_obstacles, waypoints, vel, transform, boundary, simulation_time
+        self, filtered_obstacles, waypoints, vel, transform, boundary, simulation_time,
     ):
         """
         Execute one step of navigation. Times out in 10s.

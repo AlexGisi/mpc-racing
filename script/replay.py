@@ -17,9 +17,8 @@ fig, ax = plt.subplots()
 init_plot(ax)
 
 # Initialize line objects
-track_plot_points = np.linspace(0, cl.length, 10000)
-track_x = [cl.Gx(s) for s in track_plot_points]
-track_y = [cl.Gy(s) for s in track_plot_points]
+track_x = [cl.Gx(s) for s in np.linspace(0, cl.length, 10000)]
+track_y = [cl.Gy(s) for s in np.linspace(0, cl.length, 10000)]
 car_point, = ax.plot([], [], 'ro', label='car')
 proj_point, = ax.plot([], [], 'bo', label='projection') 
 plt.plot(track_x, track_y)

@@ -25,9 +25,9 @@ class FixedControllerParameters:
     Delta_s_min: float = 0.1
     Delta_s_max: float = 1.5
     
-    Ts: float = 0.05  # (s)
-    N: int = 30  # Prediction horizon
-    lookahead_distance: float = N*Ts*v_max # (m)  how far the centerline/error polynomials are computed for
+    Ts: float = 0.05  # (s), currently we actually use an adaptive timestep (see agent.py).
+    N: int = 30  # Prediction horizon, can be set adaptively (see agent.py).
+    lookahead_distance: float = N*Ts*v_max # (m), length that the centerline/error polynomials are computed.
     max_iter: int = 500
 
 @dataclass
@@ -36,5 +36,5 @@ class RuntimeControllerParameters:
     alpha_c: float = 650  # Penalty on centerline error
     d_max: float = 0.8  # Max throttle
     q_v_y: float = 100  # Penalty on lateral acceleration
-    n: int = 4  # Exponent on e_hat_C; \in {2, 4, 6, 9, ...}; See top of p8
+    n: int = 2  # Exponent on e_hat_C; \in {2, 4, 6, 9, ...}; See top of p8
     beta_delta: float = 50000  # Penalty on difference in steering
