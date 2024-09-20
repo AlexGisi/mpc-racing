@@ -3,6 +3,7 @@ import numpy as np
 import casadi as ca
 from models.State import State
 from models.VehicleParameters import VehicleParameters
+from control.ControllerParameters import FixedControllerParameters
 
 ###
 def f_vehicle_(x_k, u_k):
@@ -76,8 +77,8 @@ opti.subject_to(X[5, 0] == state0.yaw_dot)
 f_vehicle = ca.Function('f_vehicle', [X, u], [f_vehicle_(X, u)])
 
 for i in range(1, N+1):
-    dx[i-1] = state_direction[0] * i * VehicleParameters.Ts * (VehicleParameters.max_vel / 5)
-    dy[i-1] = state_direction[1] * i * VehicleParameters.Ts * (VehicleParameters.max_vel / 5)
+    dx[i-1] = state_direction[0] * i * VehicleParameters.Ts * (FixedControllerParams.max_vel / 5)
+    dy[i-1] = state_direction[1] * i * VehicleParameters.Ts * (FixedControllerParams.max_vel / 5)
     opti.set_initial(X[0, i], state0.x+dx[i-1])
     opti.set_initial(X[1, i], state0.y+dy[i-1])
     opti.set_initial(X[2, i], state0.yaw)

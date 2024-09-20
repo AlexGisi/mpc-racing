@@ -33,6 +33,8 @@ for step_num in file_numbers:
 
 print(f"total steps: {len(mpcs)}")
 for i, mpc in enumerate(mpcs[START_NUM-file_numbers[0]:]):
+    if not mpc['controlled']:
+        continue
     print(f"controlled: {mpc['controlled']}")
 
     step_df = df[(df['steps'] >= mpc['step'])]
@@ -86,8 +88,8 @@ for i, mpc in enumerate(mpcs[START_NUM-file_numbers[0]:]):
 
     ax2.plot(range(len(controls)), [s for t, s in controls], 'b--', label="predicted steer")
     ax2.plot(range(len(controls)), [t for t, s in controls], 'g--', label="predicted throttle")
-    ax2.plot(range(len(controls)), step_df['cmd_steer'][:len(controls)], 'b-', label="actual steer")
-    ax2.plot(range(len(controls)), step_df['cmd_throttle'][:len(controls)]-step_df['cmd_brake'][:len(controls)], 'g-', label="actual throttle")
+    ax2.plot(range(len(step_df['cmd_steer'][:len(controls)])), step_df['cmd_steer'][:len(controls)], 'b-', label="actual steer")
+    ax2.plot(range(len(step_df['cmd_throttle'][:len(controls)])), step_df['cmd_throttle'][:len(controls)]-step_df['cmd_brake'][:len(controls)], 'g-', label="actual throttle")
     ax2.set_title(f"Generated commands (took {round(mpc['time'], 4)}s)")
     ax2.set_xlabel("Step")
     ax2.grid(True)
@@ -113,7 +115,7 @@ for i, mpc in enumerate(mpcs[START_NUM-file_numbers[0]:]):
     print("step ", file_numbers[i+START_NUM])
 
     ax4.plot(range(len(mpc['s_hat'])), mpc['s_hat'], label="$\hat{s}$")
-    ax4.plot(range(len(mpc['s_hat'])), step_df['progress'][:len(mpc['s_hat'])], label="s")
+    ax4.plot(range(len(step_df['progress'][:len(mpc['s_hat'])])), step_df['progress'][:len(mpc['s_hat'])], label="s")
     ax4.set_xlabel("Step")
     ax4.grid(True)
     ax4.legend()

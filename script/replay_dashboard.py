@@ -1,3 +1,4 @@
+import argparse
 import sys
 import os
 import pandas as pd
@@ -5,22 +6,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 from splines.ParameterizedCenterline import ParameterizedCenterline
 
+parser = argparse.ArgumentParser()
+parser.add_argument('run_dir')
+parser.add_argument('-s', type=int, default=0, help='start step')
+parser.add_argument('-n', action='store_true', help='show numbers')
+args = parser.parse_args()
+
 
 DF_FP = os.path.join(sys.argv[1], 'steps.csv')
-START = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+START = args.s
+SHOW_NUMBERS = args.n
 
 df = pd.read_csv(DF_FP).iloc[START:, :]
 cl = ParameterizedCenterline()
 cl.from_file("waypoints/shanghai_intl_circuit")
 
+ss = np.linspace(0, cl.length, 10000)  # Number of points to plot
+
 fig, axs = plt.subplots(3, 3)
 
 axs[0, 0].plot(df['X'], df['Y'], 'r-')
-axs[0, 0].plot([cl.Gx(s) for s in np.linspace(0, cl.length, 10000)], [cl.Gy(s) for s in np.linspace(0, cl.length, 10000)], 'b--')
+axs[0, 0].plot([cl.Gx(s) for s in ss], [cl.Gy(s) for s in ss], 'b--')
 axs[0, 0].plot([x for x,y in cl.left_lane.waypoints], [y for x, y in cl.left_lane.waypoints], color='b')
 axs[0, 0].plot([x for x,y in cl.right_lane.waypoints], [y for x, y in cl.right_lane.waypoints], color='b')
-for i, (x, y, step) in enumerate(zip(df['X'], df['Y'], df['steps'])):
-    axs[0, 0].text(x, y, str(step), fontsize=5, ha='center')
+if SHOW_NUMBERS:
+    for i, (x, y, step) in enumerate(zip(df['X'], df['Y'], df['steps'])):
+        axs[0, 0].text(x, y, str(step), fontsize=5, ha='center')
+
 axs[0, 0].set_title("path")
 axs[0, 0].set_aspect('equal')
 axs[0, 0].grid(True)
