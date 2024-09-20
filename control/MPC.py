@@ -55,7 +55,8 @@ class MPC:
         
 
         Ts = FixedControllerParameters.Ts if Ts is None else Ts
-        max_s_delta = Ts * VehicleParameters.max_vel  # max progress per timestep
+        max_s_delta = Ts * FixedControllerParameters.v_max  # max progress per timestep
+        # max_s_delta = Ts * VehicleParameters.max_vel  # max progress per timestep
         min_s_delta = 0.1
 
         # Decision variables. Column i is the <u/s/x> vector at time i. 
@@ -124,6 +125,7 @@ class MPC:
 
         opti.set_initial(U, u_pred)
         for i in range(1, N+1):
+            # opti.set_initial(S_hat[i], s0 + i*Ts*init_s0[3])
             opti.set_initial(S_hat[i], s0 + i*Ts*VehicleParameters.max_vel)  # todo
 
             pred = self.f_vehicle(init_s0, u_pred[:, i-1], Ts=Ts)
@@ -132,7 +134,7 @@ class MPC:
 
             opti.subject_to(States[:, i] == f_vehicle(States[:, i-1], U[:, i-1]))
             opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )  # Bound progress estimation differences
-            # opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))  # Stay within the lane
+            opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))  # Stay within the lane
             
         for i in range(0, N):
             opti.subject_to(U[0, i] < max_throttle)
@@ -261,12 +263,11 @@ class MPC:
 
     def steer_cmd_to_angle(self, steer_cmd, v_x, v_y):
         """
-        Maps a steer command in [-1, 1] to the angle of the wheels
-        over the next timestep, using CasADi operations.
+        Maps a steer command in [-1, 1] to the angle of the wheels over the next timestep.
         """
         vel = ca.sqrt(v_x**2 + v_y**2) * 3.6  # km/h
 
-        # Define gain based on velocity via torque curve
+        # Define gain based on velocity via sim-defined steering curve.
         gain = -0.001971664699 * vel + 0.986547
 
         return deg2rad(steer_cmd * gain * VehicleParameters.max_steer)

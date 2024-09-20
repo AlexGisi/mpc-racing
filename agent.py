@@ -151,7 +151,7 @@ class Agent:
         )
         # N = int(np.ceil(LOOKAHEAD / (self.mean_ts * (state0.v_x))))
         # N = np.clip(N, 5, 9)
-        N = 8
+        N = 12
         print(N)
         cl_x_coeffs = self.cl.x_as_coeffs(
             s=self.progress - POLY_LOOKBACK, 
