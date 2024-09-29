@@ -63,7 +63,8 @@ except IndexError:
 import carla
 from carla import ColorConverter as cc
 
-from agent import Agent
+from agent_pid import Agent as PIDAgent
+from agent import Agent as MPCAgent
 
 
 # ==============================================================================
@@ -724,7 +725,12 @@ def game_loop(args):
         world = World(client.get_world(), hud, args)
         controller = KeyboardControl(world)
 
-        agent = Agent()
+        if args.agent == "mpc":
+            agent = MPCAgent()
+        elif args.agent == "pid":
+            agent = PIDAgent()
+        else:
+            raise ValueError("args.agent was not 'mpc' or 'pid'")
 
         # TODO: Change track name to a parameter
         original_wps = pickle.load(open("./waypoints/{}".format(args.map), 'rb'))
@@ -925,6 +931,11 @@ def main():
         '-m', '--map',
         help='Set Different Map for testing: shanghai_intl_circuit, t1_triple, t2_triple, t3, t4',
         default="shanghai_intl_circuit")
+    argparser.add_argument(
+        '-a', '--agent',
+        help="Set agent, 'pid' or 'mpc', mpc is default",
+        default='mpc'
+    )
 
     args = argparser.parse_args()
 

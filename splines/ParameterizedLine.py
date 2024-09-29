@@ -122,6 +122,11 @@ class ParameterizedLine:
 
         kappa = np.abs(dx * ddy - dy * ddx)
         return kappa
+    
+    def mean_curvature(self, s, lookahead, N=10):
+        ss = np.linspace(s, s+lookahead, N)
+        ks = [self.curvature(s) for s in ss]
+        return (1 / N) * sum(ks)
 
     def unit_principal_normal(self, s):
         """

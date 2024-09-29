@@ -3,7 +3,7 @@ import casadi as ca
 from models.State import State
 from models.VehicleParameters import VehicleParameters
 from control.ControllerParameters import FixedControllerParameters, RuntimeControllerParameters
-from control.util import make_poly, deg2rad, normal_pdf
+from control.util import make_poly, deg2rad
 
 
 class MPC:
