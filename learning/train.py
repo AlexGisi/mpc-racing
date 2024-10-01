@@ -10,21 +10,26 @@ from torch.utils.data import TensorDataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from learning.vehicle import Vehicle
-from learning.util import get_most_recent_subdirectory
+from learning.util import load_dataset
 
 
 ###----------
 
-LR = 1e-3
+LR = 1e2
 BATCH_SIZE = 64
 TEST_SPLIT = 0.15
-EPOCHS = 100
+EPOCHS = 25
+FACTOR = 0.1
+PATIENCE = 3
+
 OPTIMIZER = 'Adam'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SEED = 1337
+DTYPE = torch.float64
 
-LOG_DIR = ""  # If empty use datetime
-DATA_CSV_FP = "../runs/combined.csv"  # Relative to this file
+LOG_DIR = ""  # If empty use logs/(datetime)
+DATA_TRAIN_FP = "data/nodamp/train.csv"  # Relative to this file
+DATA_VAL_FP = "data/nodamp/validate.csv"
 
 FEATURES = [
     'X_0', 'Y_0', 'yaw_0', 'vx_0', 'vy_0', 'yawdot_0', 'throttle_0', 'steer_0', 'last_ts',
@@ -36,7 +41,8 @@ TARGETS = [
 ###----------
 
 
-data_fp = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_CSV_FP))
+train_fp = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_TRAIN_FP))
+val_fp = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_VAL_FP))
 
 if LOG_DIR == "":
     LOG_DIR = "logs/" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -49,17 +55,14 @@ torch.manual_seed(SEED)
 
 print(f"Using device {DEVICE}.")
 print("Loading data...")
-steps_df = pd.read_csv(data_fp)
-data_X = steps_df.loc[:, FEATURES].to_numpy()
-data_Y = steps_df.loc[:, TARGETS].to_numpy()
+X_train, y_train = load_dataset(train_fp, FEATURES, TARGETS, DEVICE, DTYPE)
+X_val, y_val = load_dataset(val_fp, FEATURES, TARGETS, DEVICE, DTYPE)
+print(f"Loaded {len(X_train)} rows of training data and {len(X_val)} rows of validation data.")
+breakpoint()
 
-X = torch.tensor(data_X, dtype=torch.float32, device=DEVICE)
-Y = torch.tensor(data_Y, dtype=torch.float32, device=DEVICE)
-print(f"Loaded {len(steps_df)} rows.")
-
-X_train, X_val, y_train, y_val = train_test_split(
-    X, Y, test_size=TEST_SPLIT, random_state=1337,
-)
+if torch.isnan(X_train).any() or torch.isnan(y_train).any() or torch.isnan(X_val).any() or torch.isnan(y_val).any():
+    print("data has a nan")
+    breakpoint()
 
 train_dataset = TensorDataset(X_train, y_train)
 val_dataset = TensorDataset(X_val, y_val)
@@ -67,7 +70,7 @@ val_dataset = TensorDataset(X_val, y_val)
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-model = Vehicle()
+model = Vehicle('pacejka', dtype=DTYPE).to(DEVICE)
 
 if OPTIMIZER == 'SGD':
     optimizer = optim.SGD(model.parameters(), lr=LR)
@@ -81,23 +84,31 @@ elif OPTIMIZER == 'Adadelta':
     optimizer = optim.Adadelta(model.parameters(), lr=LR)
 elif OPTIMIZER == 'AdamW':
     optimizer = optim.AdamW(model.parameters(), lr=LR)
+elif OPTIMIZER == "LBFGS":
+    optimizer = torch.optim.LBFGS(model.parameters(), lr=LR, max_iter=20)
 else:
     raise ValueError(f"Optimizer {OPTIMIZER} is not available.")
-criterion = nn.MSELoss()
 
-print("Initial report\n---")
-print("Front tire")
+criterion = nn.MSELoss()
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=FACTOR, patience=PATIENCE)
+
+initial_str = f"ReduceLROnPlateau, factor=f{FACTOR}, patience={PATIENCE}\n"
+initial_str += "Initial report\n---"
+initial_str += "Front tire"
 for n, p in model.front_tire.named_parameters():
-    print(f"\t{n}: {p}")
-print("Back tire")
+    initial_str += f"\t{n}: {p}"
+initial_str += "Back tire"
 for n, p in model.back_tire.named_parameters():
-    print(f"\t{n}: {p}")
+    initial_str += f"\t{n}: {p}"
 
 writer = SummaryWriter(log_fp)
 start = time.monotonic()
 for epoch in range(EPOCHS):
     model.train()
     running_loss = 0.0
+    i = 0
+    x0 = None
+    y0 = None
     for x, y in train_loader:
         x, y = x.to(DEVICE), y.to(DEVICE)
 
@@ -108,8 +119,13 @@ for epoch in range(EPOCHS):
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.item()
+        if torch.isnan(out).any() or torch.isnan(x).any() or torch.isnan(y).any() or torch.isnan(model.front_tire.a).any() or torch.isnan(model.back_tire.a).any():
+            breakpoint()
 
+        running_loss += loss.item()
+        i+= 1
+        x0 = x
+        y0 = y
     avg_train_loss = running_loss / len(train_loader)
 
     model.eval()
@@ -122,6 +138,8 @@ for epoch in range(EPOCHS):
 
             val_loss += loss.item()
     avg_val_loss = val_loss / len(val_loader)
+
+    scheduler.step(avg_val_loss)
 
     writer.add_scalar("Loss/train", avg_train_loss, epoch)
     writer.add_scalar("Loss/validation", avg_val_loss, epoch)
@@ -137,6 +155,7 @@ for epoch in range(EPOCHS):
     )
 end = time.monotonic()
 
+print(initial_str)
 print(f"Training finished in {end-start} seconds")
 print("Final report\n---")
 print("Front tire")

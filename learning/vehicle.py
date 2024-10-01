@@ -5,20 +5,29 @@ from models.VehicleParameters import VehicleParameters
 from control.util import deg2rad
 
 
+class LinearTire(Module):
+    def __init__(self, dtype):
+        self.stiffness = nn.Parameter(torch.tensor([100_000], dtype=dtype))
+
+    def forward(self, alpha):
+        return self.stiffness * alpha
+
+
 class Pacejka(Module):
-    def __init__(self):
+    def __init__(self, Fz, dtype=torch.float32):
         super(Pacejka, self).__init__()
 
         # a0 - a8 in http://www-cdr.stanford.edu/dynamic/bywire/tires.pdf
         # Note the ref has a0 = 1.30.
-        self.a = nn.Parameter(torch.tensor([1.3, -22.1, 1011, 1078, 1.82, 0.208, 0.0, -0.354, 0.707]))
+        self.a = nn.Parameter(torch.tensor([1.3, -22.1, 1011, 1078, 1.82, 0.208, 0.0, -0.354, 0.707], dtype=dtype))
+        self.register_buffer('Fz', torch.tensor([Fz]))
 
-    def forward(self, alpha, Fz):
+    def forward(self, alpha):
         C = self.a[0]
-        D = (self.a[1] * Fz + self.a[2]) * Fz
-        BCD = self.a[3] * torch.sin(self.a[4] * torch.atan(self.a[5] * Fz))
+        D = (self.a[1] * self.Fz + self.a[2]) * self.Fz
+        BCD = self.a[3] * torch.sin(self.a[4] * torch.atan(self.a[5] * self.Fz))
         B = BCD / (C * D)
-        E = self.a[6] * Fz**2 + self.a[7] * Fz + self.a[8]
+        E = self.a[6] * self.Fz**2 + self.a[7] * self.Fz + self.a[8]
         
         Sh = 0.0  # Camber angle of zero.
         Sv = 0.0
@@ -30,11 +39,22 @@ class Pacejka(Module):
 
 
 class Vehicle(Module):
-    def __init__(self):
+    def __init__(self, tires, dtype=torch.float32):
+        """Vehicle model
+
+        :param tires: 'pacejka', 'linear'
+        :param dtype: defaults to torch.float32
+        """
         super(Vehicle, self).__init__()
 
-        self.front_tire = Pacejka()
-        self.back_tire = Pacejka()
+        if tires == "pacejka":
+            self.front_tire = Pacejka(VehicleParameters.m * 9.81, dtype=dtype)
+            self.back_tire = Pacejka(VehicleParameters.m * 9.81, dtype=dtype)
+        elif tires == "linear":
+            self.front_tire = LinearTire(dtype=dtype)
+            self.back_tire = LinearTire(dtype=dtype)
+        else:
+            raise ValueError(f"tires not recognized")
 
     def forward(self, x):
         """Predict next vehicle state.
@@ -58,11 +78,9 @@ class Vehicle(Module):
         theta_Vf = torch.atan2((v_y + lf * yaw_dot), v_x+0.1)
         theta_Vr = torch.atan2((v_y - lr * yaw_dot), v_x+0.1)
 
-        # Calculate lateral forces at front and rear using linear tire model.
-        # Fyf = Cf * (delta - theta_Vf)
-        # Fyr = Cr * (-theta_Vr)
-        Fyf = self.front_tire(delta - theta_Vf, m * 9.81)
-        Fyr = self.back_tire(-theta_Vr, m * 9.81)
+        # Calculate lateral forces at front and rear.
+        Fyf = self.front_tire(delta - theta_Vf)
+        Fyr = self.back_tire(-theta_Vr)
 
         # Dynamics equations
         # See "Online Learning of MPC for Autonomous Racing" by Costa et al

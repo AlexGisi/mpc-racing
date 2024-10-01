@@ -1,4 +1,6 @@
 import os
+import pandas as pd
+import torch
 
 
 def get_most_recent_subdirectory(parent_directory):
@@ -10,4 +12,10 @@ def get_most_recent_subdirectory(parent_directory):
         return subdirs[-1]
     else:
         return None
+    
+def load_dataset(fp, features, targets, device, dtype):
+    df = pd.read_csv(fp)
+    X =  torch.tensor(df.loc[:, features].to_numpy(), device=device, dtype=dtype)
+    y =  torch.tensor(df.loc[:, targets].to_numpy(), device=device, dtype=dtype)
+    return X, y
     

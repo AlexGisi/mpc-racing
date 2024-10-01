@@ -1,29 +1,31 @@
 """
 Generate dataset in appropriate format for train.py, possible combining multiple runs. 
 Even if just using one logging run, must run this script to generate correct columns.
-"""
 
+Puts a training
+"""
 import os
 import pandas as pd
+import numpy as np
+
 
 ###
 PARENT_DIR = '../runs/'
 FILEPATHS = [
-    '../runs/pid-79/steps.csv',
+    '../runs/no-damp/steps.csv',
 ]
 
 THROW_OUT_FIRST = 20  # Use data starting after...
-FINAL_NAME = "../runs/combined.csv"  # If empty use first from FILEPATHS
+TRAIN_SPLIT = 0.85
+
+OUT_DIR = "data/"
 ###
 
+out_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), OUT_DIR))
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 fps = [os.path.join(parent_dir, fp) for fp in FILEPATHS]
 dfs = [pd.read_csv(fp) for fp in fps]
 
-if FINAL_NAME == "":
-    final_name = os.path.basename(FILEPATHS[0])
-else:
-    final_name = FINAL_NAME
 
 all_data = []
 for df in dfs:
@@ -47,5 +49,19 @@ for df in dfs:
             'yawdot_1': row1['yawdot'],
         })
 
-final_df = pd.DataFrame(all_data)
-final_df.to_csv(os.path.join(parent_dir, final_name), index=False)
+
+all_df = pd.DataFrame(all_data)
+n_train_idx = np.ceil(TRAIN_SPLIT * len(all_data)).astype('int')
+
+train_idx = np.random.choice(all_df.index, size=(n_train_idx,), replace=False)
+val_idx = [i for i in range(len(all_df)) if i not in train_idx]
+
+train_df = all_df.loc[train_idx, :].reindex()
+val_df = all_df.loc[val_idx, :].reindex()
+
+print(f"created train df with {len(train_df)} rows")
+print(f"created val df with {len(val_df)} rows")
+assert(len(train_df) + len(val_df) == len(all_df))
+
+train_df.to_csv(os.path.join(out_dir, 'train.csv'), index=False)
+val_df.to_csv(os.path.join(out_dir, 'validate.csv'), index=False)

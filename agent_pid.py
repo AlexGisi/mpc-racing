@@ -48,7 +48,8 @@ class Agent():
         self.zeta = 15 # Distance we look ahead to determine the curvature of the road.
 
         self.kP_steer = 0.1
-        self.kD_steer = 1
+        # self.kD_steer = 1
+        self.kD_steer = 0.1
 
         self.kP_throttle = 0.82954
         self.kD_throttle = 1.21341

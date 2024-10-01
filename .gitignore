@@ -1,4 +1,5 @@
 learning/logs
+learning/data
 runs/
 *.txt
 data-mydrive.csv
