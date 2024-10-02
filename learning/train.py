@@ -9,7 +9,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from learning.vehicle import Vehicle
-from learning.util import load_dataset, Writer
+from learning.util import load_dataset, get_abs_fp, Writer
 
 
 ###----------
@@ -26,8 +26,8 @@ SEED = 1337
 DTYPE = torch.float64
 
 LOG_DIR = ""  # If empty use logs/(datetime)
-DATA_TRAIN_FP = "data/nodamp-pid-79/train.csv"  # Relative to this file
-DATA_VAL_FP = "data/nodamp-pid-79/validate.csv"
+DATA_TRAIN_FP = "data/uniform-vy/train.csv"
+DATA_VAL_FP = "data/uniform-vy/validate.csv"
 
 FEATURES = [
     'X_0', 'Y_0', 'yaw_0', 'vx_0', 'vy_0', 'yawdot_0', 'throttle_0', 'steer_0', 'last_ts',
@@ -42,16 +42,15 @@ TIRES = 'pacejka'
 
 torch.manual_seed(SEED)
 
-train_fp = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_TRAIN_FP))
-val_fp = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_VAL_FP))
+train_fp = get_abs_fp(__file__, DATA_TRAIN_FP)
+val_fp = get_abs_fp(__file__, DATA_VAL_FP)
 
 if LOG_DIR == "":
     LOG_DIR = "logs/" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-log_fp = os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), LOG_DIR)
-)
+log_fp = get_abs_fp(__file__, LOG_DIR)
 os.makedirs(log_fp)
+
 writer = Writer(os.path.join(log_fp, 'log.txt'))
 
 writer("---hyperparameters---")
@@ -98,7 +97,7 @@ else:
 criterion = nn.MSELoss()
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=FACTOR, patience=PATIENCE)
 
-initial_str = f"ReduceLROnPlateau, factor=f{FACTOR}, patience={PATIENCE}\n"
+initial_str = ""
 initial_str += "Initial report\n---"
 initial_str += "Front tire"
 for n, p in model.front_tire.named_parameters():
@@ -166,11 +165,11 @@ for epoch in range(EPOCHS):
     tb_writer.add_scalar("Loss/train", avg_train_loss, epoch)
     tb_writer.add_scalar("Loss/validation", avg_val_loss, epoch)
     for name, param in model.front_tire.named_parameters():
-        tb_writer.add_histogram("front_tire/param/" + name, param.cpu(), epoch)
-        tb_writer.add_histogram("front_tire/grad/" + name, param.grad.cpu(), epoch)
+        tb_writer.add_histogram("param/front_tire/" + name, param.cpu(), epoch)
+        tb_writer.add_histogram("grad/back_tire/" + name, param.grad.cpu(), epoch)
     for name, param in model.back_tire.named_parameters():
-        tb_writer.add_histogram("back_tire/param/" + name, param.cpu(), epoch)
-        tb_writer.add_histogram("back_tire/grad/" + name, param.grad.cpu(), epoch)
+        tb_writer.add_histogram("param/front_tire" + name, param.cpu(), epoch)
+        tb_writer.add_histogram("grad/back_tire" + name, param.grad.cpu(), epoch)
 
     writer(
         f"Epoch {epoch+1}/{EPOCHS}\t Train Loss: {avg_train_loss:.7f}\t Validation Loss: {avg_val_loss:.7f}"

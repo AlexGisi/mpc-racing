@@ -19,10 +19,18 @@ def load_dataset(fp, features, targets, device, dtype):
     X =  torch.tensor(df.loc[:, features].to_numpy(), device=device, dtype=dtype)
     y =  torch.tensor(df.loc[:, targets].to_numpy(), device=device, dtype=dtype)
     return X, y
+
+def get_abs_fp(file_fp, rel_fp):
+    return os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(file_fp)), rel_fp)
+    )
     
 class Writer:
-    def __init__(self, fp):
+    def __init__(self, fp, delete_if_exists=False):
         self.fp = fp
+        
+        if delete_if_exists and os.path.exists(fp):
+            os.remove(fp)
 
     def write(self, string):
         with open(self.fp, 'a') as f:

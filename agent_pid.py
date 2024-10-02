@@ -44,7 +44,7 @@ class Agent():
         self.last_error = 0
 
         # Tunable parameters
-        self.k = 1.3  # Target vel aggressiveness, k=1.2 is reasonable aggressive.
+        self.k = 1.1  # Target vel aggressiveness, k=1.2 is reasonable aggressive.
         self.zeta = 15 # Distance we look ahead to determine the curvature of the road.
 
         self.kP_steer = 0.1
@@ -184,7 +184,12 @@ class Agent():
         print("progress: ", self.progress)
 
         control = carla.VehicleControl()
-        control.steer = self.pp_delta(self.lookahead) + self.error*self.kP_steer + (self.last_error - self.error)*self.kD_steer
+        control.steer = (
+            self.pp_delta(self.lookahead) 
+            + self.error*self.kP_steer 
+            + (self.last_error - self.error)*self.kD_steer 
+            + np.sin(self.steps/10)*0.1
+        )
 
         vel_lookahead = (self.vel**2 / self.vel_lookahead_factor)
         target_vel, kappa = self.get_target_vel(vel_lookahead)

@@ -8,17 +8,25 @@ import os
 import pandas as pd
 import numpy as np
 
+import learning.dataset_filters as filters
+
 
 ###
 PARENT_DIR = '../runs/'
 FILEPATHS = [
+    'sin-1/steps.csv',
     'no-damp/steps.csv',
     'pid-79/steps.csv',
+    'sin-long/steps.csv',
+    'sin-longer/steps.csv'
 ]
 
 THROW_OUT_FIRST = 20  # Use data starting after...
 TRAIN_SPLIT = 0.85
 
+# Apply some filter on the combined-dataset dataframe.
+# POST_FILTER = lambda df: filters.uniform('vy_1', 3, df)
+POST_FILTER = None
 OUT_DIR = "data/"
 ###
 
@@ -50,9 +58,11 @@ for df in dfs:
             'yawdot_1': row1['yawdot'],
         })
 
-
 all_df = pd.DataFrame(all_data)
-n_train_idx = np.ceil(TRAIN_SPLIT * len(all_data)).astype('int')
+if POST_FILTER:
+    all_df = POST_FILTER(all_df)
+
+n_train_idx = np.ceil(TRAIN_SPLIT * len(all_df)).astype('int')
 
 train_idx = np.random.choice(all_df.index, size=(n_train_idx,), replace=False)
 val_idx = [i for i in range(len(all_df)) if i not in train_idx]

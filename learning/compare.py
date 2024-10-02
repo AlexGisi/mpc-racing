@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from learning.vehicle import Vehicle
-from learning.util import load_dataset
+from learning.util import load_dataset, get_abs_fp
 
 ###
 models = [
@@ -13,7 +13,7 @@ models = [
     {"model": Vehicle("linear"), "name": "linear-1", "fp": "models/linear-1/model"},
 ]
 
-DATA_VAL_FP = "data/nodamp-pid-79/validate.csv"
+DATA_VAL_FP = "data/uniform-vy/validate.csv"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DTYPE = torch.float32
 SEED = 1337
@@ -43,11 +43,7 @@ LABELS = ['vx', 'vy', 'yawdot']
 
 torch.manual_seed(SEED)
 
-get_abs_fp = lambda rel_fp: os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), rel_fp)
-)
-
-X, y = load_dataset(get_abs_fp(DATA_VAL_FP), FEATURES, TARGETS, DEVICE, DTYPE)
+X, y = load_dataset(get_abs_fp(__file__, DATA_VAL_FP), FEATURES, TARGETS, DEVICE, DTYPE)
 criterion = nn.MSELoss()
 
 for m in models:
@@ -78,4 +74,5 @@ for m in models:
 
 handles, labels = ax.get_legend_handles_labels()
 fig.legend(handles, labels, loc='upper center')
+fig.suptitle("Errors for vx, vy, yawdot across models")
 plt.show()

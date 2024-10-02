@@ -769,7 +769,9 @@ def game_loop(args):
 
             # Both Scoring Function + Waypoint Update
             if distance < 5:
-                idx += 1
+                if not args.infinite:
+                    idx += 1
+
                 if idx == len(waypoints):
                     cur_time = hud.simulation_time
                     total_score += (cur_time - start_time)
@@ -935,6 +937,12 @@ def main():
         '-a', '--agent',
         help="Set agent, 'pid' or 'mpc', mpc is default",
         default='mpc'
+    )
+    argparser.add_argument(
+        '-i', '--infinite',
+        action='store_true',
+        default=False,
+        help="Don't stop the simulation after a lap"
     )
 
     args = argparser.parse_args()
