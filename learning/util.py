@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import torch
+import sys
 
 
 def get_most_recent_subdirectory(parent_directory):
@@ -19,3 +20,14 @@ def load_dataset(fp, features, targets, device, dtype):
     y =  torch.tensor(df.loc[:, targets].to_numpy(), device=device, dtype=dtype)
     return X, y
     
+class Writer:
+    def __init__(self, fp):
+        self.fp = fp
+
+    def write(self, string):
+        with open(self.fp, 'a') as f:
+            print(string, file=sys.stdout)
+            print(string, file=f) 
+
+    def __call__(self, string):
+        self.write(string)

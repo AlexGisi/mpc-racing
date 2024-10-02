@@ -12,7 +12,8 @@ import numpy as np
 ###
 PARENT_DIR = '../runs/'
 FILEPATHS = [
-    '../runs/no-damp/steps.csv',
+    'no-damp/steps.csv',
+    'pid-79/steps.csv',
 ]
 
 THROW_OUT_FIRST = 20  # Use data starting after...
@@ -22,7 +23,7 @@ OUT_DIR = "data/"
 ###
 
 out_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), OUT_DIR))
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__))))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), PARENT_DIR))
 fps = [os.path.join(parent_dir, fp) for fp in FILEPATHS]
 dfs = [pd.read_csv(fp) for fp in fps]
 

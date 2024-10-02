@@ -1,0 +1,233 @@
+---hyperparameters---
+LR=20.0, BATCH_SIZE=64, FACTOR=0.5, PATIENCE=3, OPTIMIZER=Adam
+DATA_TRAIN_FP=data/nodamp/train.csv
+DATA_VAL_FP=data/nodamp/validate.csv
+A_FRONT=None
+A_BACK=None
+Using device cuda.
+Loading data...
+Loaded 3272 rows of training data and 577 rows of validation data.
+/home/alex/.local/lib/python3.8/site-packages/torch/nn/modules/loss.py:535: UserWarning: Using a target size (torch.Size([1, 6])) that is different to the input size (torch.Size([6])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.mse_loss(input, target, reduction=self.reduction)
+        lr=20.0
+Epoch 1/100      Train Loss: 0.21900     Validation Loss: 0.07131
+        lr=20.0
+Epoch 2/100      Train Loss: 0.08887     Validation Loss: 0.03008
+        lr=20.0
+Epoch 3/100      Train Loss: 0.23804     Validation Loss: 0.07564
+        lr=20.0
+Epoch 4/100      Train Loss: 1.11182     Validation Loss: 0.04164
+        lr=20.0
+Epoch 5/100      Train Loss: 0.14981     Validation Loss: 0.03787
+        lr=10.0
+Epoch 6/100      Train Loss: 0.07605     Validation Loss: 0.05947
+        lr=10.0
+Epoch 7/100      Train Loss: 0.69086     Validation Loss: 0.21972
+        lr=10.0
+Epoch 8/100      Train Loss: 0.22552     Validation Loss: 0.05106
+        lr=10.0
+Epoch 9/100      Train Loss: 0.11570     Validation Loss: 0.13441
+        lr=5.0
+Epoch 10/100     Train Loss: 0.15262     Validation Loss: 0.10776
+        lr=5.0
+Epoch 11/100     Train Loss: 0.06851     Validation Loss: 0.08714
+        lr=5.0
+Epoch 12/100     Train Loss: 0.04503     Validation Loss: 0.03102
+        lr=5.0
+Epoch 13/100     Train Loss: 0.04807     Validation Loss: 0.11769
+        lr=2.5
+Epoch 14/100     Train Loss: 0.03639     Validation Loss: 0.03563
+        lr=2.5
+Epoch 15/100     Train Loss: 0.06188     Validation Loss: 0.03127
+        lr=2.5
+Epoch 16/100     Train Loss: 0.07728     Validation Loss: 0.03212
+        lr=2.5
+Epoch 17/100     Train Loss: 0.04492     Validation Loss: 0.03038
+        lr=1.25
+Epoch 18/100     Train Loss: 0.06497     Validation Loss: 0.05497
+        lr=1.25
+Epoch 19/100     Train Loss: 0.08052     Validation Loss: 0.03898
+        lr=1.25
+Epoch 20/100     Train Loss: 0.03971     Validation Loss: 0.05155
+        lr=1.25
+Epoch 21/100     Train Loss: 0.03025     Validation Loss: 0.03184
+        lr=0.625
+Epoch 22/100     Train Loss: 0.04555     Validation Loss: 0.03290
+        lr=0.625
+Epoch 23/100     Train Loss: 0.03146     Validation Loss: 0.03423
+        lr=0.625
+Epoch 24/100     Train Loss: 0.02786     Validation Loss: 0.03191
+        lr=0.625
+Epoch 25/100     Train Loss: 0.03436     Validation Loss: 0.04609
+        lr=0.3125
+Epoch 26/100     Train Loss: 0.03990     Validation Loss: 0.03224
+        lr=0.3125
+Epoch 27/100     Train Loss: 0.09253     Validation Loss: 0.03843
+        lr=0.3125
+Epoch 28/100     Train Loss: 0.07608     Validation Loss: 0.14442
+        lr=0.3125
+Epoch 29/100     Train Loss: 0.06098     Validation Loss: 0.13103
+        lr=0.15625
+Epoch 30/100     Train Loss: 0.09040     Validation Loss: 0.03186
+        lr=0.15625
+Epoch 31/100     Train Loss: 0.05247     Validation Loss: 0.13595
+        lr=0.15625
+Epoch 32/100     Train Loss: 0.05017     Validation Loss: 0.05213
+        lr=0.15625
+Epoch 33/100     Train Loss: 0.02741     Validation Loss: 0.03349
+        lr=0.078125
+Epoch 34/100     Train Loss: 0.02670     Validation Loss: 0.03459
+        lr=0.078125
+Epoch 35/100     Train Loss: 0.02741     Validation Loss: 0.02740
+        lr=0.078125
+Epoch 36/100     Train Loss: 0.02682     Validation Loss: 0.02919
+        lr=0.078125
+Epoch 37/100     Train Loss: 0.04055     Validation Loss: 0.02953
+        lr=0.078125
+Epoch 38/100     Train Loss: 0.02644     Validation Loss: 0.03203
+        lr=0.078125
+Epoch 39/100     Train Loss: 0.02680     Validation Loss: 0.02737
+        lr=0.078125
+Epoch 40/100     Train Loss: 0.02645     Validation Loss: 0.02882
+        lr=0.078125
+Epoch 41/100     Train Loss: 0.02761     Validation Loss: 0.02934
+        lr=0.078125
+Epoch 42/100     Train Loss: 0.02659     Validation Loss: 0.03292
+        lr=0.0390625
+Epoch 43/100     Train Loss: 0.02739     Validation Loss: 0.03348
+        lr=0.0390625
+Epoch 44/100     Train Loss: 0.02903     Validation Loss: 0.03321
+        lr=0.0390625
+Epoch 45/100     Train Loss: 0.02680     Validation Loss: 0.03277
+        lr=0.0390625
+Epoch 46/100     Train Loss: 0.02609     Validation Loss: 0.03196
+        lr=0.01953125
+Epoch 47/100     Train Loss: 0.02659     Validation Loss: 0.02878
+        lr=0.01953125
+Epoch 48/100     Train Loss: 0.02689     Validation Loss: 0.02987
+        lr=0.01953125
+Epoch 49/100     Train Loss: 0.02684     Validation Loss: 0.03476
+        lr=0.01953125
+Epoch 50/100     Train Loss: 0.02714     Validation Loss: 0.03832
+        lr=0.009765625
+Epoch 51/100     Train Loss: 0.02732     Validation Loss: 0.02871
+        lr=0.009765625
+Epoch 52/100     Train Loss: 0.02683     Validation Loss: 0.03844
+        lr=0.009765625
+Epoch 53/100     Train Loss: 0.02651     Validation Loss: 0.02942
+        lr=0.009765625
+Epoch 54/100     Train Loss: 0.02697     Validation Loss: 0.03006
+        lr=0.0048828125
+Epoch 55/100     Train Loss: 0.02734     Validation Loss: 0.02994
+        lr=0.0048828125
+Epoch 56/100     Train Loss: 0.02612     Validation Loss: 0.03240
+        lr=0.0048828125
+Epoch 57/100     Train Loss: 0.02640     Validation Loss: 0.03348
+        lr=0.0048828125
+Epoch 58/100     Train Loss: 0.02657     Validation Loss: 0.03337
+        lr=0.0024414062
+Epoch 59/100     Train Loss: 0.02642     Validation Loss: 0.03423
+        lr=0.0024414062
+Epoch 60/100     Train Loss: 0.02708     Validation Loss: 0.03480
+        lr=0.0024414062
+Epoch 61/100     Train Loss: 0.02642     Validation Loss: 0.03160
+        lr=0.0024414062
+Epoch 62/100     Train Loss: 0.02647     Validation Loss: 0.03236
+        lr=0.0012207031
+Epoch 63/100     Train Loss: 0.02697     Validation Loss: 0.03249
+        lr=0.0012207031
+Epoch 64/100     Train Loss: 0.02661     Validation Loss: 0.03279
+        lr=0.0012207031
+Epoch 65/100     Train Loss: 0.02749     Validation Loss: 0.03331
+        lr=0.0012207031
+Epoch 66/100     Train Loss: 0.02658     Validation Loss: 0.03403
+        lr=0.0006103516
+Epoch 67/100     Train Loss: 0.02631     Validation Loss: 0.03083
+        lr=0.0006103516
+Epoch 68/100     Train Loss: 0.02620     Validation Loss: 0.02928
+        lr=0.0006103516
+Epoch 69/100     Train Loss: 0.02632     Validation Loss: 0.02967
+        lr=0.0006103516
+Epoch 70/100     Train Loss: 0.02686     Validation Loss: 0.03040
+        lr=0.0003051758
+Epoch 71/100     Train Loss: 0.02630     Validation Loss: 0.03190
+        lr=0.0003051758
+Epoch 72/100     Train Loss: 0.02686     Validation Loss: 0.03065
+        lr=0.0003051758
+Epoch 73/100     Train Loss: 0.02716     Validation Loss: 0.03333
+        lr=0.0003051758
+Epoch 74/100     Train Loss: 0.02677     Validation Loss: 0.03331
+        lr=0.0001525879
+Epoch 75/100     Train Loss: 0.02692     Validation Loss: 0.02965
+        lr=0.0001525879
+Epoch 76/100     Train Loss: 0.02651     Validation Loss: 0.03479
+        lr=0.0001525879
+Epoch 77/100     Train Loss: 0.02722     Validation Loss: 0.03230
+        lr=0.0001525879
+Epoch 78/100     Train Loss: 0.02648     Validation Loss: 0.03152
+        lr=7.62939e-05
+Epoch 79/100     Train Loss: 0.02697     Validation Loss: 0.03385
+        lr=7.62939e-05
+Epoch 80/100     Train Loss: 0.02598     Validation Loss: 0.03280
+        lr=7.62939e-05
+Epoch 81/100     Train Loss: 0.02720     Validation Loss: 0.03443
+        lr=7.62939e-05
+Epoch 82/100     Train Loss: 0.02545     Validation Loss: 0.03084
+        lr=3.8147e-05
+Epoch 83/100     Train Loss: 0.02652     Validation Loss: 0.02885
+        lr=3.8147e-05
+Epoch 84/100     Train Loss: 0.02692     Validation Loss: 0.03043
+        lr=3.8147e-05
+Epoch 85/100     Train Loss: 0.02662     Validation Loss: 0.03254
+        lr=3.8147e-05
+Epoch 86/100     Train Loss: 0.02632     Validation Loss: 0.03238
+        lr=1.90735e-05
+Epoch 87/100     Train Loss: 0.02600     Validation Loss: 0.03167
+        lr=1.90735e-05
+Epoch 88/100     Train Loss: 0.02639     Validation Loss: 0.03103
+        lr=1.90735e-05
+Epoch 89/100     Train Loss: 0.02613     Validation Loss: 0.02809
+        lr=1.90735e-05
+Epoch 90/100     Train Loss: 0.02574     Validation Loss: 0.03137
+        lr=9.5367e-06
+Epoch 91/100     Train Loss: 0.02561     Validation Loss: 0.03327
+        lr=9.5367e-06
+Epoch 92/100     Train Loss: 0.02643     Validation Loss: 0.03030
+        lr=9.5367e-06
+Epoch 93/100     Train Loss: 0.02748     Validation Loss: 0.02816
+        lr=9.5367e-06
+Epoch 94/100     Train Loss: 0.02723     Validation Loss: 0.03267
+        lr=4.7684e-06
+Epoch 95/100     Train Loss: 0.02612     Validation Loss: 0.03457
+        lr=4.7684e-06
+Epoch 96/100     Train Loss: 0.02634     Validation Loss: 0.03551
+        lr=4.7684e-06
+Epoch 97/100     Train Loss: 0.02668     Validation Loss: 0.03496
+        lr=4.7684e-06
+Epoch 98/100     Train Loss: 0.02695     Validation Loss: 0.03279
+        lr=2.3842e-06
+Epoch 99/100     Train Loss: 0.02613     Validation Loss: 0.03220
+        lr=2.3842e-06
+Epoch 100/100    Train Loss: 0.02723     Validation Loss: 0.02814
+ReduceLROnPlateau, factor=f0.5, patience=3
+Initial report
+---Front tire   a: Parameter containing:
+tensor([ 1.3000e+00, -2.2100e+01,  1.0110e+03,  1.0780e+03,  1.8200e+00,
+         2.0800e-01,  0.0000e+00, -3.5400e-01,  7.0700e-01], device='cuda:0',
+       dtype=torch.float64, requires_grad=True)Back tire        a: Parameter containing:
+tensor([ 1.3000e+00, -2.2100e+01,  1.0110e+03,  1.0780e+03,  1.8200e+00,
+         2.0800e-01,  0.0000e+00, -3.5400e-01,  7.0700e-01], device='cuda:0',
+       dtype=torch.float64, requires_grad=True)
+Training finished in 23.74625973799266 seconds
+Final report
+---
+Front tire
+        a: Parameter containing:
+tensor([ 5.3030e+01, -2.6543e+01,  1.0098e+03,  5.2838e+02,  5.6003e+02,
+        -5.2851e+02, -6.4861e+01, -3.3884e+01,  9.9538e-01], device='cuda:0',
+       dtype=torch.float64, requires_grad=True)
+Back tire
+        a: Parameter containing:
+tensor([-1.0502e+02, -1.6411e+02,  8.8114e+02,  1.4215e+01, -4.4555e+02,
+        -3.7887e+02,  2.7899e+02,  2.5986e+02,  8.6651e-01], device='cuda:0',
+       dtype=torch.float64, requires_grad=True)

@@ -1,26 +1,53 @@
 import torch
 from torch.nn import Module
 import torch.nn as nn
+import torch.nn.functional as F
 from models.VehicleParameters import VehicleParameters
 from control.util import deg2rad
 
 
+class MLP(Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(1, 8)
+        self.fc2 = nn.Linear(8, 16)
+        self.fc3 = nn.Linear(16, 8)
+        self.fc4 = nn.Linear(8, 1)
+
+    def forward(self, alpha):
+        y = F.relu(self.fc1(alpha))
+        y = F.relu(self.fc2(y))
+        y = F.relu(self.fc3(y))
+        y = F.relu(self.fc4(y))
+        return y
+
+
+class SectorBoundedMLP(MLP):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, alpha):
+        y = super().forward(alpha)
+        return torch.abs(y) * torch.sign(alpha)
+
+
 class LinearTire(Module):
-    def __init__(self, dtype):
-        self.stiffness = nn.Parameter(torch.tensor([100_000], dtype=dtype))
+    def __init__(self):
+        super().__init__()
+        self.stiffness = nn.Parameter(torch.tensor([65_000], dtype=torch.float32))
 
     def forward(self, alpha):
         return self.stiffness * alpha
 
 
 class Pacejka(Module):
-    def __init__(self, Fz, dtype=torch.float32):
+    def __init__(self, Fz):
         super(Pacejka, self).__init__()
 
         # a0 - a8 in http://www-cdr.stanford.edu/dynamic/bywire/tires.pdf
         # Note the ref has a0 = 1.30.
-        self.a = nn.Parameter(torch.tensor([1.3, -22.1, 1011, 1078, 1.82, 0.208, 0.0, -0.354, 0.707], dtype=dtype))
-        self.register_buffer('Fz', torch.tensor([Fz]))
+        self.a = nn.Parameter(torch.tensor([1.3, -22.1, 1011, 1078, 1.82, 0.208, 0.0, -0.354, 0.707], dtype=torch.float32))
+        self.register_buffer('Fz', torch.tensor([Fz], dtype=torch.float32))
 
     def forward(self, alpha):
         C = self.a[0]
@@ -39,7 +66,7 @@ class Pacejka(Module):
 
 
 class Vehicle(Module):
-    def __init__(self, tires, dtype=torch.float32):
+    def __init__(self, tires):
         """Vehicle model
 
         :param tires: 'pacejka', 'linear'
@@ -48,11 +75,13 @@ class Vehicle(Module):
         super(Vehicle, self).__init__()
 
         if tires == "pacejka":
-            self.front_tire = Pacejka(VehicleParameters.m * 9.81, dtype=dtype)
-            self.back_tire = Pacejka(VehicleParameters.m * 9.81, dtype=dtype)
+            self.front_tire = Pacejka(VehicleParameters.m * 9.81)
+            self.back_tire = Pacejka(VehicleParameters.m * 9.81)
         elif tires == "linear":
-            self.front_tire = LinearTire(dtype=dtype)
-            self.back_tire = LinearTire(dtype=dtype)
+            self.front_tire = LinearTire()
+            self.back_tire = LinearTire()
+        elif tires == 'mlp':
+            self.front_tire = MLP()
         else:
             raise ValueError(f"tires not recognized")
 

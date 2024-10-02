@@ -5,22 +5,20 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from learning.vehicle import Vehicle
-from learning.util import load_dataset
+from learning.util import load_dataset, Writer
 
 
 ###----------
 
-LR = 1e2
+LR = 1e1
 BATCH_SIZE = 64
-TEST_SPLIT = 0.15
-EPOCHS = 25
-FACTOR = 0.1
-PATIENCE = 3
+EPOCHS = 500
+FACTOR = 1/2
+PATIENCE = 5
 
 OPTIMIZER = 'Adam'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -28,8 +26,8 @@ SEED = 1337
 DTYPE = torch.float64
 
 LOG_DIR = ""  # If empty use logs/(datetime)
-DATA_TRAIN_FP = "data/nodamp/train.csv"  # Relative to this file
-DATA_VAL_FP = "data/nodamp/validate.csv"
+DATA_TRAIN_FP = "data/nodamp-pid-79/train.csv"  # Relative to this file
+DATA_VAL_FP = "data/nodamp-pid-79/validate.csv"
 
 FEATURES = [
     'X_0', 'Y_0', 'yaw_0', 'vx_0', 'vy_0', 'yawdot_0', 'throttle_0', 'steer_0', 'last_ts',
@@ -38,8 +36,11 @@ TARGETS = [
     'X_1', 'Y_1', 'yaw_1', 'vx_1', 'vy_1', 'yawdot_1',
 ]
 
+TIRES = 'pacejka'
+
 ###----------
 
+torch.manual_seed(SEED)
 
 train_fp = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_TRAIN_FP))
 val_fp = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_VAL_FP))
@@ -50,19 +51,24 @@ if LOG_DIR == "":
 log_fp = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), LOG_DIR)
 )
+os.makedirs(log_fp)
+writer = Writer(os.path.join(log_fp, 'log.txt'))
 
-torch.manual_seed(SEED)
+writer("---hyperparameters---")
+writer(f"LR={LR}, BATCH_SIZE={BATCH_SIZE}, FACTOR={FACTOR}, PATIENCE={PATIENCE}, OPTIMIZER={OPTIMIZER}")
+writer(f"DATA_TRAIN_FP={DATA_TRAIN_FP}")
+writer(f"DATA_VAL_FP={DATA_VAL_FP}")
+writer(f"TIRES={TIRES}")
 
-print(f"Using device {DEVICE}.")
-print("Loading data...")
+writer(f"Using device {DEVICE}.")
+writer("Loading data...")
 X_train, y_train = load_dataset(train_fp, FEATURES, TARGETS, DEVICE, DTYPE)
 X_val, y_val = load_dataset(val_fp, FEATURES, TARGETS, DEVICE, DTYPE)
-print(f"Loaded {len(X_train)} rows of training data and {len(X_val)} rows of validation data.")
-breakpoint()
+writer(f"Loaded {len(X_train)} rows of training data and {len(X_val)} rows of validation data.")
 
 if torch.isnan(X_train).any() or torch.isnan(y_train).any() or torch.isnan(X_val).any() or torch.isnan(y_val).any():
-    print("data has a nan")
-    breakpoint()
+    writer("data has a nan")
+    exit()
 
 train_dataset = TensorDataset(X_train, y_train)
 val_dataset = TensorDataset(X_val, y_val)
@@ -70,7 +76,7 @@ val_dataset = TensorDataset(X_val, y_val)
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-model = Vehicle('pacejka', dtype=DTYPE).to(DEVICE)
+model = Vehicle(TIRES).to(DEVICE, dtype=DTYPE)
 
 if OPTIMIZER == 'SGD':
     optimizer = optim.SGD(model.parameters(), lr=LR)
@@ -101,7 +107,21 @@ initial_str += "Back tire"
 for n, p in model.back_tire.named_parameters():
     initial_str += f"\t{n}: {p}"
 
-writer = SummaryWriter(log_fp)
+# Initial loss.
+model.eval()
+val_loss = 0.0
+with torch.no_grad():
+    for x,y in val_loader:
+        x, y = x.to(DEVICE), y.to(DEVICE)
+        out = model(x)
+        loss = criterion(out.squeeze(), y)
+
+        val_loss += loss.item()
+avg_val_loss = val_loss / len(val_loader)
+writer(f"Initial loss: {avg_val_loss}")
+# 
+
+tb_writer = SummaryWriter(log_fp)
 start = time.monotonic()
 for epoch in range(EPOCHS):
     model.train()
@@ -119,7 +139,8 @@ for epoch in range(EPOCHS):
         loss.backward()
         optimizer.step()
 
-        if torch.isnan(out).any() or torch.isnan(x).any() or torch.isnan(y).any() or torch.isnan(model.front_tire.a).any() or torch.isnan(model.back_tire.a).any():
+        if torch.isnan(out).any() or torch.isnan(x).any() or torch.isnan(y).any():
+            writer("encountered nan in training")
             breakpoint()
 
         running_loss += loss.item()
@@ -140,30 +161,31 @@ for epoch in range(EPOCHS):
     avg_val_loss = val_loss / len(val_loader)
 
     scheduler.step(avg_val_loss)
+    writer(f"\tlr={round(scheduler.get_last_lr()[0], 10)}")
 
-    writer.add_scalar("Loss/train", avg_train_loss, epoch)
-    writer.add_scalar("Loss/validation", avg_val_loss, epoch)
+    tb_writer.add_scalar("Loss/train", avg_train_loss, epoch)
+    tb_writer.add_scalar("Loss/validation", avg_val_loss, epoch)
     for name, param in model.front_tire.named_parameters():
-        writer.add_histogram("front_tire/param/" + name, param.cpu(), epoch)
-        writer.add_histogram("front_tire/grad/" + name, param.grad.cpu(), epoch)
+        tb_writer.add_histogram("front_tire/param/" + name, param.cpu(), epoch)
+        tb_writer.add_histogram("front_tire/grad/" + name, param.grad.cpu(), epoch)
     for name, param in model.back_tire.named_parameters():
-        writer.add_histogram("back_tire/param/" + name, param.cpu(), epoch)
-        writer.add_histogram("back_tire/grad/" + name, param.grad.cpu(), epoch)
+        tb_writer.add_histogram("back_tire/param/" + name, param.cpu(), epoch)
+        tb_writer.add_histogram("back_tire/grad/" + name, param.grad.cpu(), epoch)
 
-    print(
-        f"Epoch {epoch+1}/{EPOCHS}\t Train Loss: {avg_train_loss:.6f}\t Validation Loss: {avg_val_loss:.6f}"
+    writer(
+        f"Epoch {epoch+1}/{EPOCHS}\t Train Loss: {avg_train_loss:.7f}\t Validation Loss: {avg_val_loss:.7f}"
     )
 end = time.monotonic()
 
-print(initial_str)
-print(f"Training finished in {end-start} seconds")
-print("Final report\n---")
-print("Front tire")
+writer(initial_str)
+writer(f"Training finished in {end-start} seconds")
+writer("Final report\n---")
+writer("Front tire")
 for n, p in model.front_tire.named_parameters():
-    print(f"\t{n}: {p}")
-print("Back tire")
+    writer(f"\t{n}: {p}")
+writer("Back tire")
 for n, p in model.back_tire.named_parameters():
-    print(f"\t{n}: {p}")
+    writer(f"\t{n}: {p}")
 
 model_fp = os.path.join(log_fp, "model")
 torch.save(model.state_dict(), model_fp)
