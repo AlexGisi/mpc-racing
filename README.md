@@ -5,6 +5,8 @@ This repository contains an implementation of MPC-based racing in a Carla simula
 - Custom combined PID and pure pursuit racing-tuned controllers for comparison
 - Optimization of MPC parameters using genetic algorithm
 - Kinematic, dynamic, and blended bicycle models with custom extensions to accurately model the simulation vehicle
+- Collect, visualize, and create filtered datasets from vehicle data
+- Train and evaluate tire models using pytorch
 
 The simulation is built on the GRAIC platform for the CARLA simulator.
 
