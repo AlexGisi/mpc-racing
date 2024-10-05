@@ -3,18 +3,18 @@ from dataclasses import dataclass
 @dataclass
 class FixedControllerParameters:
     # Fixed MPC parameters (Costa p8).
-    lambda_s: float = 600  # Reward on track progress at prediction horizon
+    lambda_s: float = 500  # Reward on track progress at prediction horizon
     alpha_L: float = 2000 # Penalty on lag approximation
 
-    min_steer: float = -0.8
-    max_steer: float = 0.8
+    min_steer: float = -0.9
+    max_steer: float = 0.9
     min_throttle: float = -1.0
     max_steer_delta: float = 0.1
     min_steer_delta: float = -0.1
     max_throttle_delta: float = 2.0  # todo: can increase these
     min_throttle_delta: float = -0.4
 
-    q_v_max: float = 2  # Soft constraint on velocity
+    q_v_max: float = 4  # Soft constraint on velocity
     v_max: float = 50
     Delta_d_max: float = 0.2
     Delta_delta_max: float = 0.075
@@ -28,8 +28,8 @@ class FixedControllerParameters:
 @dataclass
 class RuntimeControllerParameters:
     # Runtime MPC parameters (Costa p8).
-    alpha_c: float = 50  # Penalty on centerline error
+    alpha_c: float = 1000  # Penalty on centerline error
     d_max: float = 0.8  # Max throttle
     q_v_y: float = 25  # Penalty on lateral velocity
     n: int = 2  # Exponent on e_hat_C; \in {2, 4, 6, 9, ...}; See top of p8
-    beta_delta: float = 50000  # Penalty on difference in steering
+    beta_delta: float = 5000  # Penalty on difference in steering

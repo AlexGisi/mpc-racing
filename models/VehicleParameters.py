@@ -28,11 +28,8 @@ class VehicleParameters:
     lf: float = 0.8  # Center of mass to the front axle (m) (trial and error)
     lr: float = 2  # Center of mass to the rear axle (m) (trial and error)
     
-    # Need to ID
-    # Cf: float = 200_000  # Cornering stiffness coefficient, front tires (trial and error)
-    # Cr: float = 200_000  # Cornering stiffness coefficient, rear tires (trial and error)
-    Cf: float = 100_000
-    Cr: float = 100_000
+    Cf: float = 65_000  # Cornering stiffness coefficient, front tires (trained)
+    Cr: float = 65_000  # Cornering stiffness coefficient, rear tires (trained)
 
     # Pacejka tire model
     pac_Bf: float = 10  # Pacejka tire model coefficient Bf, dimensionless

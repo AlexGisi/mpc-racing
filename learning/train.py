@@ -16,9 +16,9 @@ from learning.util import load_dataset, get_abs_fp, Writer
 
 LR = 1e1
 BATCH_SIZE = 64
-EPOCHS = 500
+EPOCHS = 75
 FACTOR = 1/2
-PATIENCE = 5
+PATIENCE = 10
 
 OPTIMIZER = 'Adam'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,8 +26,8 @@ SEED = 1337
 DTYPE = torch.float64
 
 LOG_DIR = ""  # If empty use logs/(datetime)
-DATA_TRAIN_FP = "data/uniform-vy/train.csv"
-DATA_VAL_FP = "data/uniform-vy/validate.csv"
+DATA_TRAIN_FP = "data/nodamp-pid-79/train.csv"
+DATA_VAL_FP = "data/nodamp-pid-79/validate.csv"
 
 FEATURES = [
     'X_0', 'Y_0', 'yaw_0', 'vx_0', 'vy_0', 'yawdot_0', 'throttle_0', 'steer_0', 'last_ts',
@@ -36,7 +36,7 @@ TARGETS = [
     'X_1', 'Y_1', 'yaw_1', 'vx_1', 'vy_1', 'yawdot_1',
 ]
 
-TIRES = 'pacejka'
+TIRES = 'linear'
 
 ###----------
 
@@ -99,11 +99,8 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=FACTOR,
 
 initial_str = ""
 initial_str += "Initial report\n---"
-initial_str += "Front tire"
-for n, p in model.front_tire.named_parameters():
-    initial_str += f"\t{n}: {p}"
-initial_str += "Back tire"
-for n, p in model.back_tire.named_parameters():
+initial_str += 'car'
+for n, p in model.named_parameters():
     initial_str += f"\t{n}: {p}"
 
 # Initial loss.
@@ -164,12 +161,9 @@ for epoch in range(EPOCHS):
 
     tb_writer.add_scalar("Loss/train", avg_train_loss, epoch)
     tb_writer.add_scalar("Loss/validation", avg_val_loss, epoch)
-    for name, param in model.front_tire.named_parameters():
-        tb_writer.add_histogram("param/front_tire/" + name, param.cpu(), epoch)
-        tb_writer.add_histogram("grad/back_tire/" + name, param.grad.cpu(), epoch)
-    for name, param in model.back_tire.named_parameters():
-        tb_writer.add_histogram("param/front_tire" + name, param.cpu(), epoch)
-        tb_writer.add_histogram("grad/back_tire" + name, param.grad.cpu(), epoch)
+    for name, param in model.named_parameters():
+        tb_writer.add_histogram("param/" + name, param.cpu(), epoch)
+        tb_writer.add_histogram("grad/" + name, param.grad.cpu(), epoch)
 
     writer(
         f"Epoch {epoch+1}/{EPOCHS}\t Train Loss: {avg_train_loss:.7f}\t Validation Loss: {avg_val_loss:.7f}"
@@ -179,11 +173,8 @@ end = time.monotonic()
 writer(initial_str)
 writer(f"Training finished in {end-start} seconds")
 writer("Final report\n---")
-writer("Front tire")
-for n, p in model.front_tire.named_parameters():
-    writer(f"\t{n}: {p}")
-writer("Back tire")
-for n, p in model.back_tire.named_parameters():
+writer("car")
+for n, p in model.named_parameters():
     writer(f"\t{n}: {p}")
 
 model_fp = os.path.join(log_fp, "model")

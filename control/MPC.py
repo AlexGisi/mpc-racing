@@ -173,7 +173,7 @@ class MPC:
             self.dual = self.sol.value(opti.lam_g)
         except RuntimeError as e:  # found infeasible solution or exceeded iterations or ...
             print(e)
-            breakpoint()
+            # breakpoint()
             self.ret = (opti.debug.value(States), 
                         opti.debug.value(U), 
                         opti.debug.value(S_hat), 

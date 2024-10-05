@@ -9,11 +9,11 @@ from learning.util import load_dataset, get_abs_fp
 
 ###
 models = [
-    {"model": Vehicle("pacejka"), "name": "pacejka-1", "fp": "models/pacejka-1/model"},
-    {"model": Vehicle("linear"), "name": "linear-1", "fp": "models/linear-1/model"},
+    {"model": Vehicle("linear"), "name": "linear-best", "fp": "models/linear-best/model"},
+    {"model": Vehicle("linear"), "name": "linear-best-chill", "fp": "models/linear-best-chill/model"},
 ]
 
-DATA_VAL_FP = "data/uniform-vy/validate.csv"
+DATA_VAL_FP = "data/pid-79-val/validate.csv"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DTYPE = torch.float32
 SEED = 1337
@@ -47,7 +47,9 @@ X, y = load_dataset(get_abs_fp(__file__, DATA_VAL_FP), FEATURES, TARGETS, DEVICE
 criterion = nn.MSELoss()
 
 for m in models:
-    m['model'] = m['model'].to(DEVICE, dtype=DTYPE)
+    m['fp'] = get_abs_fp(__file__, m['fp'])
+    m['model'].load_state_dict(torch.load(m['fp'], weights_only=True))
+    m['model'] = m['model'].to(device=DEVICE, dtype=DTYPE)
     m['model'].eval()
 
     with torch.no_grad():

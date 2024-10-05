@@ -151,7 +151,7 @@ class Agent:
         )
         # N = int(np.ceil(LOOKAHEAD / (self.mean_ts * (state0.v_x))))
         # N = np.clip(N, 5, 9)
-        N = 12
+        N = 6
         print(N)
         cl_x_coeffs = self.cl.x_as_coeffs(
             s=self.progress - POLY_LOOKBACK, 
@@ -178,7 +178,7 @@ class Agent:
             centerline_y_poly_coeffs=cl_y_coeffs,
             max_error=max_err,
             runtime_params=self.runtime_params,
-            Ts=self.mean_ts,
+            Ts=0.1,
             N=N,
         )
         sol, ret, duals = mpc.solution()

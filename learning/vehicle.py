@@ -62,7 +62,21 @@ class Pacejka(Module):
         phi = (1 - E) * (alpha + Sh) + (E / B) * torch.atan(B * (alpha + Sh))
         Fy = D * torch.sin(C * torch.atan(B * phi)) + Sv
 
-        return Fy
+        return -Fy
+    
+    def forward2(self, alpha):
+        B = 0.714
+        C = 1.4
+        D = 1.0
+        E = -0.2
+
+        Sh = 0.0  # Camber angle of zero.
+        Sv = 0.0
+
+        phi = (1 - E) * (alpha + Sh) + (E / B) * torch.atan(B * (alpha + Sh))
+        Fy = D * torch.sin(C * torch.atan(B * phi)) + Sv
+
+        return -Fy
 
 
 class Vehicle(Module):
@@ -82,6 +96,7 @@ class Vehicle(Module):
             self.back_tire = LinearTire()
         elif tires == 'mlp':
             self.front_tire = MLP()
+            self.back_tire = MLP()
         else:
             raise ValueError(f"tires not recognized")
 

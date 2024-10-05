@@ -1,0 +1,171 @@
+---hyperparameters---
+LR=10.0, BATCH_SIZE=64, FACTOR=0.5, PATIENCE=10, OPTIMIZER=Adam
+DATA_TRAIN_FP=data/nodamp-pid-79/train.csv
+DATA_VAL_FP=data/nodamp-pid-79/validate.csv
+TIRES=linear
+Using device cuda.
+Loading data...
+Loaded 6405 rows of training data and 1130 rows of validation data.
+Initial loss: 0.03410471994218069
+	lr=10.0
+Epoch 1/75	 Train Loss: 0.0168327	 Validation Loss: 0.0340999
+	lr=10.0
+Epoch 2/75	 Train Loss: 0.0167081	 Validation Loss: 0.0340958
+	lr=10.0
+Epoch 3/75	 Train Loss: 0.0167171	 Validation Loss: 0.0340921
+	lr=10.0
+Epoch 4/75	 Train Loss: 0.0166962	 Validation Loss: 0.0340882
+	lr=10.0
+Epoch 5/75	 Train Loss: 0.0167169	 Validation Loss: 0.0340851
+	lr=10.0
+Epoch 6/75	 Train Loss: 0.0166806	 Validation Loss: 0.0340826
+	lr=10.0
+Epoch 7/75	 Train Loss: 0.0167143	 Validation Loss: 0.0340802
+	lr=10.0
+Epoch 8/75	 Train Loss: 0.0167484	 Validation Loss: 0.0340780
+	lr=10.0
+Epoch 9/75	 Train Loss: 0.0166773	 Validation Loss: 0.0340758
+	lr=10.0
+Epoch 10/75	 Train Loss: 0.0168549	 Validation Loss: 0.0340743
+	lr=10.0
+Epoch 11/75	 Train Loss: 0.0167363	 Validation Loss: 0.0340717
+	lr=10.0
+Epoch 12/75	 Train Loss: 0.0167258	 Validation Loss: 0.0340704
+	lr=10.0
+Epoch 13/75	 Train Loss: 0.0166694	 Validation Loss: 0.0340690
+	lr=10.0
+Epoch 14/75	 Train Loss: 0.0166847	 Validation Loss: 0.0340677
+	lr=10.0
+Epoch 15/75	 Train Loss: 0.0166628	 Validation Loss: 0.0340666
+	lr=10.0
+Epoch 16/75	 Train Loss: 0.0166639	 Validation Loss: 0.0340661
+	lr=10.0
+Epoch 17/75	 Train Loss: 0.0166998	 Validation Loss: 0.0340653
+	lr=10.0
+Epoch 18/75	 Train Loss: 0.0167155	 Validation Loss: 0.0340649
+	lr=10.0
+Epoch 19/75	 Train Loss: 0.0167242	 Validation Loss: 0.0340643
+	lr=10.0
+Epoch 20/75	 Train Loss: 0.0166728	 Validation Loss: 0.0340638
+	lr=10.0
+Epoch 21/75	 Train Loss: 0.0166752	 Validation Loss: 0.0340636
+	lr=10.0
+Epoch 22/75	 Train Loss: 0.0166710	 Validation Loss: 0.0340631
+	lr=10.0
+Epoch 23/75	 Train Loss: 0.0166884	 Validation Loss: 0.0340630
+	lr=10.0
+Epoch 24/75	 Train Loss: 0.0166774	 Validation Loss: 0.0340626
+	lr=10.0
+Epoch 25/75	 Train Loss: 0.0166750	 Validation Loss: 0.0340623
+	lr=10.0
+Epoch 26/75	 Train Loss: 0.0166875	 Validation Loss: 0.0340622
+	lr=10.0
+Epoch 27/75	 Train Loss: 0.0166867	 Validation Loss: 0.0340617
+	lr=10.0
+Epoch 28/75	 Train Loss: 0.0167228	 Validation Loss: 0.0340615
+	lr=10.0
+Epoch 29/75	 Train Loss: 0.0166962	 Validation Loss: 0.0340608
+	lr=10.0
+Epoch 30/75	 Train Loss: 0.0166944	 Validation Loss: 0.0340609
+	lr=10.0
+Epoch 31/75	 Train Loss: 0.0166684	 Validation Loss: 0.0340606
+	lr=10.0
+Epoch 32/75	 Train Loss: 0.0166764	 Validation Loss: 0.0340606
+	lr=5.0
+Epoch 33/75	 Train Loss: 0.0166861	 Validation Loss: 0.0340607
+	lr=5.0
+Epoch 34/75	 Train Loss: 0.0166733	 Validation Loss: 0.0340607
+	lr=5.0
+Epoch 35/75	 Train Loss: 0.0167183	 Validation Loss: 0.0340606
+	lr=5.0
+Epoch 36/75	 Train Loss: 0.0167260	 Validation Loss: 0.0340606
+	lr=5.0
+Epoch 37/75	 Train Loss: 0.0166780	 Validation Loss: 0.0340606
+	lr=5.0
+Epoch 38/75	 Train Loss: 0.0286780	 Validation Loss: 0.0340607
+	lr=5.0
+Epoch 39/75	 Train Loss: 0.0166731	 Validation Loss: 0.0340607
+	lr=5.0
+Epoch 40/75	 Train Loss: 0.0166929	 Validation Loss: 0.0340607
+	lr=5.0
+Epoch 41/75	 Train Loss: 0.0166568	 Validation Loss: 0.0340608
+	lr=5.0
+Epoch 42/75	 Train Loss: 0.0166876	 Validation Loss: 0.0340608
+	lr=5.0
+Epoch 43/75	 Train Loss: 0.0166497	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 44/75	 Train Loss: 0.0166961	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 45/75	 Train Loss: 0.0166758	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 46/75	 Train Loss: 0.0166786	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 47/75	 Train Loss: 0.0166650	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 48/75	 Train Loss: 0.0167131	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 49/75	 Train Loss: 0.0166637	 Validation Loss: 0.0340606
+	lr=2.5
+Epoch 50/75	 Train Loss: 0.0166864	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 51/75	 Train Loss: 0.0167405	 Validation Loss: 0.0340607
+	lr=2.5
+Epoch 52/75	 Train Loss: 0.0166990	 Validation Loss: 0.0340606
+	lr=2.5
+Epoch 53/75	 Train Loss: 0.0286991	 Validation Loss: 0.0340605
+	lr=2.5
+Epoch 54/75	 Train Loss: 0.0166839	 Validation Loss: 0.0340605
+	lr=1.25
+Epoch 55/75	 Train Loss: 0.0166679	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 56/75	 Train Loss: 0.0166661	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 57/75	 Train Loss: 0.0166694	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 58/75	 Train Loss: 0.0166710	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 59/75	 Train Loss: 0.0166970	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 60/75	 Train Loss: 0.0166914	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 61/75	 Train Loss: 0.0166949	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 62/75	 Train Loss: 0.0167037	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 63/75	 Train Loss: 0.0166667	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 64/75	 Train Loss: 0.0167220	 Validation Loss: 0.0340606
+	lr=1.25
+Epoch 65/75	 Train Loss: 0.0166859	 Validation Loss: 0.0340606
+	lr=0.625
+Epoch 66/75	 Train Loss: 0.0166841	 Validation Loss: 0.0340607
+	lr=0.625
+Epoch 67/75	 Train Loss: 0.0166552	 Validation Loss: 0.0340607
+	lr=0.625
+Epoch 68/75	 Train Loss: 0.0166924	 Validation Loss: 0.0340607
+	lr=0.625
+Epoch 69/75	 Train Loss: 0.0166664	 Validation Loss: 0.0340607
+	lr=0.625
+Epoch 70/75	 Train Loss: 0.0166923	 Validation Loss: 0.0340607
+	lr=0.625
+Epoch 71/75	 Train Loss: 0.0167329	 Validation Loss: 0.0340607
+	lr=0.625
+Epoch 72/75	 Train Loss: 0.0166709	 Validation Loss: 0.0340606
+	lr=0.625
+Epoch 73/75	 Train Loss: 0.0167056	 Validation Loss: 0.0340606
+	lr=0.625
+Epoch 74/75	 Train Loss: 0.0166660	 Validation Loss: 0.0340606
+	lr=0.625
+Epoch 75/75	 Train Loss: 0.0167255	 Validation Loss: 0.0340606
+Initial report
+---car	front_tire.stiffness: Parameter containing:
+tensor([65000.], device='cuda:0', dtype=torch.float64, requires_grad=True)	back_tire.stiffness: Parameter containing:
+tensor([65000.], device='cuda:0', dtype=torch.float64, requires_grad=True)
+Training finished in 15.003318284871057 seconds
+Final report
+---
+car
+	front_tire.stiffness: Parameter containing:
+tensor([64265.0406], device='cuda:0', dtype=torch.float64, requires_grad=True)
+	back_tire.stiffness: Parameter containing:
+tensor([58614.8799], device='cuda:0', dtype=torch.float64, requires_grad=True)

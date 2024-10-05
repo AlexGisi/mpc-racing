@@ -14,14 +14,14 @@ import learning.dataset_filters as filters
 ###
 PARENT_DIR = '../runs/'
 FILEPATHS = [
-    'sin-1/steps.csv',
-    'no-damp/steps.csv',
+    # 'sin-1/steps.csv',
+    # 'no-damp/steps.csv',
     'pid-79/steps.csv',
-    'sin-long/steps.csv',
-    'sin-longer/steps.csv'
+    # 'sin-long/steps.csv',
+    # 'sin-longer/steps.csv'
 ]
 
-THROW_OUT_FIRST = 20  # Use data starting after...
+THROW_OUT_FIRST = 80  # Use data starting after...
 TRAIN_SPLIT = 0.85
 
 # Apply some filter on the combined-dataset dataframe.
