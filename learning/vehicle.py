@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.VehicleParameters import VehicleParameters
 from control.util import deg2rad
+import pandas as pd
 
 
 class MLP(Module):
@@ -15,11 +16,37 @@ class MLP(Module):
         self.fc4 = nn.Linear(8, 1)
 
     def forward(self, alpha):
-        y = F.relu(self.fc1(alpha))
-        y = F.relu(self.fc2(y))
-        y = F.relu(self.fc3(y))
-        y = F.relu(self.fc4(y))
+        alpha = torch.unsqueeze(alpha, dim=1)
+        y = self.fc1(alpha)
+        y = F.relu(y)
+        y = self.fc2(y)
+        y = F.relu(y)
+        y = self.fc3(y)
+        y = F.relu(y)
+        y = self.fc4(y)
+        y = F.relu(y)
+        y = torch.squeeze(y)
+        
         return y
+    
+class MLP2(Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(1, 8)
+        self.fc2 = nn.Linear(8, 1)
+        # self.scale = nn.Parameter(torch.tensor([65_000.]))
+
+    def forward(self, alpha):
+        # alpha *= self.scale
+
+        alpha = torch.unsqueeze(alpha, dim=1)
+        y = self.fc1(alpha)
+        y = F.relu(y)
+        y = self.fc2(y)
+        y = F.relu(y)
+        y = torch.squeeze(y)
+        
+        return y * 1e3
 
 
 class SectorBoundedMLP(MLP):
@@ -34,20 +61,20 @@ class SectorBoundedMLP(MLP):
 class LinearTire(Module):
     def __init__(self):
         super().__init__()
-        self.stiffness = nn.Parameter(torch.tensor([65_000], dtype=torch.float32))
+        self.stiffness = nn.Parameter(torch.tensor([100_000.], dtype=torch.float32))
 
     def forward(self, alpha):
         return self.stiffness * alpha
 
 
 class Pacejka(Module):
-    def __init__(self, Fz):
+    def __init__(self):
         super(Pacejka, self).__init__()
 
         # a0 - a8 in http://www-cdr.stanford.edu/dynamic/bywire/tires.pdf
         # Note the ref has a0 = 1.30.
         self.a = nn.Parameter(torch.tensor([1.3, -22.1, 1011, 1078, 1.82, 0.208, 0.0, -0.354, 0.707], dtype=torch.float32))
-        self.register_buffer('Fz', torch.tensor([Fz], dtype=torch.float32))
+        self.register_buffer('Fz', torch.tensor([VehicleParameters.m * 9.81], dtype=torch.float32))
 
     def forward(self, alpha):
         C = self.a[0]
@@ -62,7 +89,7 @@ class Pacejka(Module):
         phi = (1 - E) * (alpha + Sh) + (E / B) * torch.atan(B * (alpha + Sh))
         Fy = D * torch.sin(C * torch.atan(B * phi)) + Sv
 
-        return -Fy
+        return Fy
     
     def forward2(self, alpha):
         B = 0.714
@@ -76,7 +103,7 @@ class Pacejka(Module):
         phi = (1 - E) * (alpha + Sh) + (E / B) * torch.atan(B * (alpha + Sh))
         Fy = D * torch.sin(C * torch.atan(B * phi)) + Sv
 
-        return -Fy
+        return Fy
 
 
 class Vehicle(Module):
@@ -87,7 +114,9 @@ class Vehicle(Module):
         :param dtype: defaults to torch.float32
         """
         super(Vehicle, self).__init__()
+        self.i = 0
 
+        self.tires = tires
         if tires == "pacejka":
             self.front_tire = Pacejka(VehicleParameters.m * 9.81)
             self.back_tire = Pacejka(VehicleParameters.m * 9.81)
@@ -97,6 +126,9 @@ class Vehicle(Module):
         elif tires == 'mlp':
             self.front_tire = MLP()
             self.back_tire = MLP()
+        elif tires == 'mlp2':
+            self.front_tire = MLP2()
+            self.back_tire = MLP2()
         else:
             raise ValueError(f"tires not recognized")
 
@@ -121,6 +153,10 @@ class Vehicle(Module):
         # Calculate slip angles.
         theta_Vf = torch.atan2((v_y + lf * yaw_dot), v_x+0.1)
         theta_Vr = torch.atan2((v_y - lr * yaw_dot), v_x+0.1)
+
+        df = pd.DataFrame(torch.stack([throttle, steer, v_x, v_y, yaw_dot, dt, theta_Vf, theta_Vr], dim=1).detach().cpu().numpy(), columns=['throttle', 'steer', 'vx', 'vy', 'yawdot', 'dt', 'slip_front', 'slip_back'])
+        df.to_csv(f'/home/alex/projects/graic/autobots-race/learning/slip.csv', index=False)
+        # self.i += 1
 
         # Calculate lateral forces at front and rear.
         Fyf = self.front_tire(delta - theta_Vf)

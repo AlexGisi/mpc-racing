@@ -7,8 +7,8 @@ from learning.vehicle import Vehicle
 from learning.util import get_abs_fp
 
 ###
-MODEL_FP = "logs/2024-10-03-17-42-11/model"
-model = Vehicle('pacejka2')
+MODEL_FP = "models/linear-best-chill/model"
+model = Vehicle('linear')
 
 MAX = 10
 ###

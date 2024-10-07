@@ -9,25 +9,25 @@ from torch.utils.data import TensorDataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from learning.vehicle import Vehicle
-from learning.util import load_dataset, get_abs_fp, Writer
+from learning.util import load_dataset, get_abs_fp, Writer, make_parameter_heatmap
 
 
 ###----------
 
-LR = 1e1
+LR = 1e-2
 BATCH_SIZE = 64
-EPOCHS = 75
+EPOCHS = 100
 FACTOR = 1/2
-PATIENCE = 10
+PATIENCE = 2
 
-OPTIMIZER = 'Adam'
+OPTIMIZER = 'AdamW'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SEED = 1337
 DTYPE = torch.float64
 
 LOG_DIR = ""  # If empty use logs/(datetime)
-DATA_TRAIN_FP = "data/nodamp-pid-79/train.csv"
-DATA_VAL_FP = "data/nodamp-pid-79/validate.csv"
+DATA_TRAIN_FP = "data/big/train.csv"
+DATA_VAL_FP = "data/big/validate.csv"
 
 FEATURES = [
     'X_0', 'Y_0', 'yaw_0', 'vx_0', 'vy_0', 'yawdot_0', 'throttle_0', 'steer_0', 'last_ts',
@@ -36,7 +36,7 @@ TARGETS = [
     'X_1', 'Y_1', 'yaw_1', 'vx_1', 'vy_1', 'yawdot_1',
 ]
 
-TIRES = 'linear'
+TIRES = 'mlp2'
 
 ###----------
 
@@ -165,17 +165,23 @@ for epoch in range(EPOCHS):
         tb_writer.add_histogram("param/" + name, param.cpu(), epoch)
         tb_writer.add_histogram("grad/" + name, param.grad.cpu(), epoch)
 
+        if len(param.shape) == 2:
+            fig = make_parameter_heatmap(param)
+            tb_writer.add_figure(f"weights/{name}", fig, epoch)
+
     writer(
         f"Epoch {epoch+1}/{EPOCHS}\t Train Loss: {avg_train_loss:.7f}\t Validation Loss: {avg_val_loss:.7f}"
     )
 end = time.monotonic()
 
-writer(initial_str)
+if TIRES != 'mlp' and TIRES != 'mlp2':
+    writer(initial_str)
+    writer("Final report\n---")
+    writer("car")
+    for n, p in model.named_parameters():
+        writer(f"\t{n}: {p}")
+
 writer(f"Training finished in {end-start} seconds")
-writer("Final report\n---")
-writer("car")
-for n, p in model.named_parameters():
-    writer(f"\t{n}: {p}")
 
 model_fp = os.path.join(log_fp, "model")
 torch.save(model.state_dict(), model_fp)

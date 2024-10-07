@@ -11,9 +11,11 @@ from learning.util import load_dataset, get_abs_fp
 models = [
     {"model": Vehicle("linear"), "name": "linear-best", "fp": "models/linear-best/model"},
     {"model": Vehicle("linear"), "name": "linear-best-chill", "fp": "models/linear-best-chill/model"},
+    # # {"model": Vehicle("mlp"), "name": "mlp", "fp": "logs/2024-10-04-21-13-36/model"},
+    # {"model": Vehicle("mlp2"), "name": "mlp2", "fp": "logs/2024-10-05-07-29-59/model"},
 ]
 
-DATA_VAL_FP = "data/pid-79-val/validate.csv"
+DATA_VAL_FP = "data/big/train.csv"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DTYPE = torch.float32
 SEED = 1337
@@ -53,6 +55,7 @@ for m in models:
     m['model'].eval()
 
     with torch.no_grad():
+        print(m['name'])
         m['out'] = m['model'](X)  # [(X, Y, yaw, vx, vy, yawdot) x len(X)]
         m['errors'] = y - m['out']
         
