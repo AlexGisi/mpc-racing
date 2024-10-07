@@ -43,11 +43,10 @@ def to_file(ss, right_es, left_es):
     df.to_csv(fp, index=False)
 
 if __name__ == "__main__":
-    TRACK_NAME = "shanghai_intl_circuit"
+    TRACK_NAME = "t2_triple"
     POINTS_COUNT = 4000
 
-    cl = ParameterizedCenterline()
-    cl.from_file(f"waypoints/{TRACK_NAME}")
+    cl = ParameterizedCenterline(TRACK_NAME, error=False)
 
     ss = np.arange(0, cl.length, step=0.5)
     num_cores = 14  # Adjust this to the number of cores you want to use

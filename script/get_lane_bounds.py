@@ -6,10 +6,12 @@ import pandas as pd
 import matplotlib.pyplot as plt 
 from splines.ParameterizedCenterline import ParameterizedCenterline
 
-cl = ParameterizedCenterline()
-cl.from_file("waypoints/shanghai_intl_circuit")
+TRACK_NAME = "t2_triple"
 
-df = pd.read_csv("data/data-lanebounds.csv")
+cl = ParameterizedCenterline()
+cl.from_file(f"waypoints/{TRACK_NAME}")
+
+df = pd.read_csv(f"data/{TRACK_NAME}/steps.csv")
 df = df
 
 lefts_x = df['next_left_lane_point_x']
@@ -36,5 +38,5 @@ plt.legend()
 plt.show()
 
 # Save them
-# right_df.to_csv("lanes/right.csv", index=False)
-# left_df.to_csv("lanes/left.csv", index=False)
+right_df.to_csv(f"lanes/{TRACK_NAME}_right.csv", index=False)
+left_df.to_csv(f"lanes/{TRACK_NAME}_left.csv", index=False)

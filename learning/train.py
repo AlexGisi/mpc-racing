@@ -14,13 +14,13 @@ from learning.util import load_dataset, get_abs_fp, Writer, make_parameter_heatm
 
 ###----------
 
-LR = 1e-2
+LR = 1e-3
 BATCH_SIZE = 64
-EPOCHS = 100
+EPOCHS = 25
 FACTOR = 1/2
 PATIENCE = 2
 
-OPTIMIZER = 'AdamW'
+OPTIMIZER = 'Adam'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SEED = 1337
 DTYPE = torch.float64
@@ -36,7 +36,7 @@ TARGETS = [
     'X_1', 'Y_1', 'yaw_1', 'vx_1', 'vy_1', 'yawdot_1',
 ]
 
-TIRES = 'mlp2'
+TIRES = 'linear'
 
 ###----------
 
@@ -119,69 +119,74 @@ writer(f"Initial loss: {avg_val_loss}")
 
 tb_writer = SummaryWriter(log_fp)
 start = time.monotonic()
-for epoch in range(EPOCHS):
-    model.train()
-    running_loss = 0.0
-    i = 0
-    x0 = None
-    y0 = None
-    for x, y in train_loader:
-        x, y = x.to(DEVICE), y.to(DEVICE)
 
-        optimizer.zero_grad()
-        out = model(x)
-
-        loss = criterion(out.squeeze(), y)
-        loss.backward()
-        optimizer.step()
-
-        if torch.isnan(out).any() or torch.isnan(x).any() or torch.isnan(y).any():
-            writer("encountered nan in training")
-            breakpoint()
-
-        running_loss += loss.item()
-        i+= 1
-        x0 = x
-        y0 = y
-    avg_train_loss = running_loss / len(train_loader)
-
-    model.eval()
-    val_loss = 0.0
-    with torch.no_grad():
-        for x,y in val_loader:
+try:
+    for epoch in range(EPOCHS):
+        model.train()
+        running_loss = 0.0
+        i = 0
+        x0 = None
+        y0 = None
+        for x, y in train_loader:
             x, y = x.to(DEVICE), y.to(DEVICE)
+
+            optimizer.zero_grad()
             out = model(x)
+
             loss = criterion(out.squeeze(), y)
+            loss.backward()
+            optimizer.step()
 
-            val_loss += loss.item()
-    avg_val_loss = val_loss / len(val_loader)
+            if torch.isnan(out).any() or torch.isnan(x).any() or torch.isnan(y).any():
+                writer("encountered nan in training")
+                breakpoint()
 
-    scheduler.step(avg_val_loss)
-    writer(f"\tlr={round(scheduler.get_last_lr()[0], 10)}")
+            running_loss += loss.item()
+            i+= 1
+            x0 = x
+            y0 = y
+        avg_train_loss = running_loss / len(train_loader)
 
-    tb_writer.add_scalar("Loss/train", avg_train_loss, epoch)
-    tb_writer.add_scalar("Loss/validation", avg_val_loss, epoch)
-    for name, param in model.named_parameters():
-        tb_writer.add_histogram("param/" + name, param.cpu(), epoch)
-        tb_writer.add_histogram("grad/" + name, param.grad.cpu(), epoch)
+        model.eval()
+        val_loss = 0.0
+        with torch.no_grad():
+            for x,y in val_loader:
+                x, y = x.to(DEVICE), y.to(DEVICE)
+                out = model(x)
+                loss = criterion(out.squeeze(), y)
 
-        if len(param.shape) == 2:
-            fig = make_parameter_heatmap(param)
-            tb_writer.add_figure(f"weights/{name}", fig, epoch)
+                val_loss += loss.item()
+        avg_val_loss = val_loss / len(val_loader)
 
-    writer(
-        f"Epoch {epoch+1}/{EPOCHS}\t Train Loss: {avg_train_loss:.7f}\t Validation Loss: {avg_val_loss:.7f}"
-    )
-end = time.monotonic()
+        scheduler.step(avg_val_loss)
+        writer(f"\tlr={round(scheduler.get_last_lr()[0], 10)}")
 
-if TIRES != 'mlp' and TIRES != 'mlp2':
-    writer(initial_str)
-    writer("Final report\n---")
-    writer("car")
-    for n, p in model.named_parameters():
-        writer(f"\t{n}: {p}")
+        tb_writer.add_scalar("Loss/train", avg_train_loss, epoch)
+        tb_writer.add_scalar("Loss/validation", avg_val_loss, epoch)
+        for name, param in model.named_parameters():
+            tb_writer.add_histogram("param/" + name, param.cpu(), epoch)
+            tb_writer.add_histogram("grad/" + name, param.grad.cpu(), epoch)
 
-writer(f"Training finished in {end-start} seconds")
+            if len(param.shape) == 2:
+                fig = make_parameter_heatmap(param)
+                tb_writer.add_figure(f"weights/{name}", fig, epoch)
 
-model_fp = os.path.join(log_fp, "model")
-torch.save(model.state_dict(), model_fp)
+        writer(
+            f"Epoch {epoch+1}/{EPOCHS}\t Train Loss: {avg_train_loss:.7f}\t Validation Loss: {avg_val_loss:.7f}"
+        )
+except KeyboardInterrupt:
+    pass
+finally:
+    end = time.monotonic()
+
+    if TIRES != 'mlp' and TIRES != 'mlp2':
+        writer(initial_str)
+        writer("Final report\n---")
+        writer("car")
+        for n, p in model.named_parameters():
+            writer(f"\t{n}: {p}")
+
+    writer(f"Training finished in {end-start} seconds")
+
+    model_fp = os.path.join(log_fp, "model")
+    torch.save(model.state_dict(), model_fp)

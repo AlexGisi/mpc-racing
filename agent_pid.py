@@ -8,7 +8,7 @@ from Logger import Logger
 class Agent():
     def __init__(self, vehicle=None):
         self.vehicle = vehicle
-        self.centerline = ParameterizedCenterline("shanghai_intl_circuit")
+        self.centerline = ParameterizedCenterline("t4", lanes=False, error=False)
         self.progress = None  # Car is spawned in the middle of the track.
         
         # Vehicle state
@@ -57,6 +57,15 @@ class Agent():
         self.lookahead = 3.0  # Pure pursuit lookahead.
         self.vel_lookahead_factor = 40  # Inverse to the vel lookahead.
         ### 
+
+        # For data collection
+        self.left_lane_points = None
+        self.right_lane_points = None
+
+        self.next_left_lane_point_x = None
+        self.next_left_lane_point_y = None
+        self.next_right_lane_point_x = None
+        self.next_right_lane_point_y = None
 
         # Pure pursuit parameters
         self.delta = None
@@ -177,6 +186,21 @@ class Agent():
         self.vy = vel.x * np.sin(-self.yaw) + vel.y * np.cos(-self.yaw)
         self.vel = np.sqrt(self.vx**2 + self.vy**2)
 
+        self.left_lane_points = [
+            (waypoint.transform.location.x, waypoint.transform.location.y)
+            for waypoint in boundary[0]
+        ]
+        self.right_lane_points = [
+            (waypoint.transform.location.x, waypoint.transform.location.y)
+            for waypoint in boundary[1]
+        ]
+
+        self.next_left_lane_point_x = self.left_lane_points[0][0]
+        self.next_left_lane_point_y = self.left_lane_points[0][1]
+
+        self.next_right_lane_point_x = self.right_lane_points[0][0]
+        self.next_right_lane_point_y = self.right_lane_points[0][1]
+
         self.progress, dist = self.centerline.projection(self.X, self.Y, bounds=self.progress_bound())
         self.error = dist * self.centerline.error_sign(self.X, self.Y, self.progress)
         
@@ -188,7 +212,6 @@ class Agent():
             self.pp_delta(self.lookahead) 
             + self.error*self.kP_steer 
             + (self.last_error - self.error)*self.kD_steer 
-            + np.sin(self.steps/10)*0.1
         )
 
         vel_lookahead = (self.vel**2 / self.vel_lookahead_factor)

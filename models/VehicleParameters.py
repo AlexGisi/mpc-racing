@@ -2,13 +2,12 @@ from dataclasses import dataclass
 
 @dataclass
 class VehicleParameters:
-    # FST10d model parameters for the kinematic, dynamic, and blended models.
+    # Model parameters for the kinematic, dynamic, and blended models.
     
     # General car parameters
     m: float = 1845.0  # kg
     max_steer = 70.0  # deg
     min_steer = -70.0  # deg
-    max_vel = 33.0  # m/s
 
     # For Fx
     eta_motor = 0.9 # (default, changed in Fx() function)
@@ -27,17 +26,12 @@ class VehicleParameters:
     Iz: float = 3960.0  # Iz around z-axis in (kg m^2) (from modeling it as a prism)
     lf: float = 0.8  # Center of mass to the front axle (m) (trial and error)
     lr: float = 2  # Center of mass to the rear axle (m) (trial and error)
+
+    # lf: float = 0.9088  # Center of mass to the front axle (m) (trained)
+    # lr: float = 1.7092  # Center of mass to the rear axle (m) (trained)
     
     Cf: float = 65_000  # Cornering stiffness coefficient, front tires (trained)
     Cr: float = 65_000  # Cornering stiffness coefficient, rear tires (trained)
-
-    # Pacejka tire model
-    pac_Bf: float = 10  # Pacejka tire model coefficient Bf, dimensionless
-    pac_Br: float = 10  # Pacejka tire model coefficient Br, dimensionless
-    pac_Cf: float = 138  # Pacejka tire model coefficient Cf, dimensionless 
-    pac_Cr: float = 138
-    pac_Df: float = 1500   # Pacejka tire model coefficient Df in Newtons  
-    pac_Dr: float = 1500   # Pacejka tire model coefficient Dr in Newtons 
 
     g: float = 9.81  # Acceleration due to gravity in meters per second squared
     Vblendmin: float = 2  # Minimum blending speed in meters per second

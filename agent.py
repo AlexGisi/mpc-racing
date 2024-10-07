@@ -16,7 +16,7 @@ from models.VehicleParameters import VehicleParameters
 class Agent:
     def __init__(self, vehicle=None):
         self.vehicle = vehicle
-        self.cl = ParameterizedCenterline("shanghai_intl_circuit")
+        self.cl = ParameterizedCenterline("t4")
         self.progress = None  # Assume we don't know initial vehicle location.
 
         # Genetic algorithm
@@ -151,7 +151,7 @@ class Agent:
         )
         # N = int(np.ceil(LOOKAHEAD / (self.mean_ts * (state0.v_x))))
         # N = np.clip(N, 5, 9)
-        N = 6
+        N = 15
         print(N)
         cl_x_coeffs = self.cl.x_as_coeffs(
             s=self.progress - POLY_LOOKBACK, 
@@ -178,7 +178,7 @@ class Agent:
             centerline_y_poly_coeffs=cl_y_coeffs,
             max_error=max_err,
             runtime_params=self.runtime_params,
-            Ts=0.1,
+            Ts=0.05,
             N=N,
         )
         sol, ret, duals = mpc.solution()

@@ -55,8 +55,7 @@ class MPC:
         
 
         Ts = FixedControllerParameters.Ts if Ts is None else Ts
-        max_s_delta = Ts * FixedControllerParameters.v_max  # max progress per timestep
-        # max_s_delta = Ts * VehicleParameters.max_vel  # max progress per timestep
+        max_s_delta = Ts * v_max  # max progress per timestep
         min_s_delta = 0.1
 
         # Decision variables. Column i is the <u/s/x> vector at time i. 
@@ -125,8 +124,7 @@ class MPC:
 
         opti.set_initial(U, u_pred)
         for i in range(1, N+1):
-            # opti.set_initial(S_hat[i], s0 + i*Ts*init_s0[3])
-            opti.set_initial(S_hat[i], s0 + i*Ts*VehicleParameters.max_vel)  # todo
+            opti.set_initial(S_hat[i], s0 + i*Ts*v_max)  # todo
 
             pred = self.f_vehicle(init_s0, u_pred[:, i-1], Ts=Ts)
             opti.set_initial(States[:, i], pred)
@@ -134,7 +132,7 @@ class MPC:
 
             opti.subject_to(States[:, i] == f_vehicle(States[:, i-1], U[:, i-1]))
             opti.subject_to( opti.bounded(min_s_delta, S_hat[i] - S_hat[i-1], max_s_delta) )  # Bound progress estimation differences
-            opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))  # Stay within the lane
+            # opti.subject_to( opti.bounded(-max_error, e_hat_C(S_hat[i], States[:, i]), max_error))  # Stay within the lane
             
         for i in range(0, N):
             opti.subject_to(U[0, i] < max_throttle)
@@ -173,7 +171,7 @@ class MPC:
             self.dual = self.sol.value(opti.lam_g)
         except RuntimeError as e:  # found infeasible solution or exceeded iterations or ...
             print(e)
-            # breakpoint()
+            breakpoint()
             self.ret = (opti.debug.value(States), 
                         opti.debug.value(U), 
                         opti.debug.value(S_hat), 

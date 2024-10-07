@@ -61,7 +61,7 @@ class SectorBoundedMLP(MLP):
 class LinearTire(Module):
     def __init__(self):
         super().__init__()
-        self.stiffness = nn.Parameter(torch.tensor([100_000.], dtype=torch.float32))
+        self.stiffness = nn.Parameter(torch.tensor([65_000.], dtype=torch.float32))
 
     def forward(self, alpha):
         return self.stiffness * alpha
@@ -131,6 +131,7 @@ class Vehicle(Module):
             self.back_tire = MLP2()
         else:
             raise ValueError(f"tires not recognized")
+    
 
     def forward(self, x):
         """Predict next vehicle state.
@@ -153,10 +154,6 @@ class Vehicle(Module):
         # Calculate slip angles.
         theta_Vf = torch.atan2((v_y + lf * yaw_dot), v_x+0.1)
         theta_Vr = torch.atan2((v_y - lr * yaw_dot), v_x+0.1)
-
-        df = pd.DataFrame(torch.stack([throttle, steer, v_x, v_y, yaw_dot, dt, theta_Vf, theta_Vr], dim=1).detach().cpu().numpy(), columns=['throttle', 'steer', 'vx', 'vy', 'yawdot', 'dt', 'slip_front', 'slip_back'])
-        df.to_csv(f'/home/alex/projects/graic/autobots-race/learning/slip.csv', index=False)
-        # self.i += 1
 
         # Calculate lateral forces at front and rear.
         Fyf = self.front_tire(delta - theta_Vf)

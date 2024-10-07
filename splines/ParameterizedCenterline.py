@@ -10,17 +10,20 @@ from splines.ParameterizedLane import ParameterizedLane
 from splines.util import euclidean, midpoint
 
 class ParameterizedCenterline(ParameterizedLine):
-    def __init__(self, track: str = "shanghai_intl_circuit"):
+    def __init__(self, track: str = "shanghai_intl_circuit", lanes=True, error=True):
         super().__init__()
 
-        self.right_lane = ParameterizedLane()
-        self.right_lane.from_file(f"lanes/{track}_left.csv")
+        if lanes:
+            self.right_lane = ParameterizedLane()
+            self.right_lane.from_file(f"lanes/{track}_left.csv")
 
-        self.left_lane = ParameterizedLane()
-        self.left_lane.from_file(f"lanes/{track}_right.csv")
+            self.left_lane = ParameterizedLane()
+            self.left_lane.from_file(f"lanes/{track}_right.csv")
 
-        self.lane_error_table = pd.read_csv(f"lanes/{track}_max_error.csv",
+        if error:
+            self.lane_error_table = pd.read_csv(f"lanes/{track}_max_error.csv",
                                             index_col='ss')
+            
         self.from_file(f"waypoints/{track}")
     
     def e_as_coeffs(self, s, lookahead):
