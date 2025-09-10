@@ -37,6 +37,18 @@ to the development of the vehicle models (these are re-implemented in casadi sym
 the centerline and the lane boundaries. The `script` directory contains testing and visualization
 scripts for various parts of the project.
 
+## Reference
+The algorithm is based on the paper:
+  Gabriel Costa, João Pinho, Miguel Ayala Botto, Pedro U. Lima,
+  Online learning of MPC for autonomous racing,
+  Robotics and Autonomous Systems,
+  Volume 167,
+  2023,
+  104469,
+  ISSN 0921-8890,
+  https://doi.org/10.1016/j.robot.2023.104469.
+
+
 ## Contributors
 - [@eeshanzele](https://github.com/eeshanzele)
 - [@soumilsg](https://github.com/Soumilsg)
